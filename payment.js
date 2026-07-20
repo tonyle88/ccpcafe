@@ -35,9 +35,11 @@ async function loadPaymentContentConfig() {
 }
 
 function createQrUrl(payment,order) {
-  if(!payment.bankCode||!payment.accountNo)return order.payment?.qrUrl||'';
-  const base=`https://img.vietqr.io/image/${encodeURIComponent(payment.bankCode)}-${encodeURIComponent(String(payment.accountNo).replace(/\s/g,''))}-compact2.png`;
-  return `${base}?amount=${encodeURIComponent(order.amount)}&addInfo=${encodeURIComponent(order.transferContent)}&accountName=${encodeURIComponent(payment.accountName||'')}`;
+  const legacyBankCode=String(order.payment?.qrUrl||'').match(/img\.vietqr\.io\/image\/([A-Za-z0-9]+)-/)?.[1]||'';
+  const bankCode=payment.bankCode||legacyBankCode,accountNo=String(payment.accountNo||'').replace(/\s/g,'');
+  if(!bankCode||!accountNo)return '';
+  const params=new URLSearchParams({bank:bankCode,account:accountNo,amount:String(order.amount),info:String(order.transferContent),name:String(payment.accountName||'')});
+  return `/api/vietqr?${params}`;
 }
 
 function formatVnd(value) { return new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND' }).format(value); }

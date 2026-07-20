@@ -30,10 +30,13 @@
 
 ## 4. Frontend staging
 
-1. Điền hai deployment URL vào `config.js`; chỉ URL public, không điền secret.
-2. Đặt `environment: 'staging'`, cập nhật `releaseId` và giữ `paymentEnabled: false` tới khi đối soát xong.
-3. Deploy static hosting, kiểm tra CSP console, asset 404 và CORS.
-4. Test landing → booking → payment → manual confirm trên mobile và desktop.
+1. Trong Vercel → Project Settings → Environment Variables, tạo `CONTENT_API_URL` với giá trị là Content/Admin Web App deployment URL kết thúc bằng `/exec`. Áp dụng cho Production, Preview và Development theo nhu cầu.
+2. Không cần ghi Content API URL vào source. `/api/config` chỉ trả URL public này cho browser lúc chạy; không trả secret.
+3. Trong Content/Admin Script Properties, đặt `BOOKING_WEB_APP_URL` để public content response cung cấp Booking API URL cho landing.
+4. Đặt `environment: 'staging'`, cập nhật `releaseId` và giữ `paymentEnabled: false` tới khi đối soát xong.
+5. Redeploy sau khi thêm/chỉnh Environment Variable; kiểm tra `/api/config` trả `contentApiUrl` khác rỗng.
+6. Kiểm tra CSP console, asset 404 và CORS.
+7. Test landing → booking → payment → manual confirm trên mobile và desktop.
 
 ## 5. Production
 

@@ -1,12 +1,156 @@
-const config=window.CAFE_CCP_CONFIG||{};const state={token:sessionStorage.getItem('cafeCcpAdminToken')||'',data:null};
-const $=id=>document.getElementById(id);const loginPanel=$('login-panel'),dashboard=$('dashboard'),toast=$('toast');toast.hidden=true;
-async function api(action,data){if(!config.contentApiUrl)throw new Error('Content API chưa được cấu hình trong config.js.');const response=await fetch(config.contentApiUrl,{method:'POST',credentials:'omit',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data,token:state.token})});const payload=await response.json();if(!payload.ok)throw new Error(payload.error?.message||'Có lỗi xảy ra.');return payload.data}
-function notify(message){toast.textContent=message;toast.hidden=false;setTimeout(()=>toast.hidden=true,3000)}
-function field(label,value,onChange,type='text'){const wrapper=document.createElement('label');wrapper.textContent=label;const input=document.createElement(type==='textarea'?'textarea':'input');input.value=value??'';input.addEventListener('input',()=>onChange(input.value));wrapper.appendChild(input);return wrapper}
-function renderRecords(targetId,records,kind){const root=$(targetId);root.replaceChildren();records.forEach(original=>{const record={...original};const row=document.createElement('div');row.className='record';const isContent=kind==='content';row.append(field(isContent?'Key':'Code',record[isContent?'Key':'Code'],()=>{}));row.append(field(isContent?'Value':'Name',record[isContent?'Value':'Name'],value=>record[isContent?'Value':'Name']=value,isContent?'textarea':'text'));const save=document.createElement('button');save.textContent='Lưu';save.addEventListener('click',async()=>{save.disabled=true;try{await api(isContent?'saveContent':'savePackage',record);notify('Đã lưu thành công');await loadAdmin()}catch(error){notify(error.message)}finally{save.disabled=false}});row.append(save);root.append(row)})}
-function render(){loginPanel.hidden=true;dashboard.hidden=false;$('logout').hidden=false;$('identity').textContent=`${state.data.session.displayName||state.data.session.username} · ${state.data.session.role}`;$('health').textContent=state.data.health.ok?'Content system: hoạt động':'Content system: cần kiểm tra';renderRecords('content-list',state.data.content,'content');renderRecords('package-list',state.data.packages,'package')}
-async function loadAdmin(){state.data=await api('adminInit');render()}
-$('login-form').addEventListener('submit',async event=>{event.preventDefault();$('login-error').textContent='';try{const result=await api('login',{username:$('username').value,password:$('password').value});state.token=result.token;sessionStorage.setItem('cafeCcpAdminToken',state.token);$('password').value='';await loadAdmin()}catch(error){$('login-error').textContent=error.message;$('password').value='';$('password').focus()}});
-$('logout').addEventListener('click',async()=>{try{await api('logout')}catch(_){}sessionStorage.removeItem('cafeCcpAdminToken');location.reload()});
-document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('click',()=>{const selected=button.dataset.tab;$('content-panel').hidden=selected!=='content';$('packages-panel').hidden=selected!=='packages'}));
-if(state.token)loadAdmin().catch(()=>{sessionStorage.removeItem('cafeCcpAdminToken');state.token=''})
+const staticConfig = window.CAFE_CCP_CONFIG || {};
+const state = {
+  token: sessionStorage.getItem('cafeCcpAdminToken') || '',
+  contentApiUrl: staticConfig.contentApiUrl || '',
+  data: null
+};
+const $ = id => document.getElementById(id);
+const loginPanel = $('login-panel');
+const dashboard = $('dashboard');
+const toast = $('toast');
+let toastTimer;
+
+async function resolveContentApiUrl() {
+  if (state.contentApiUrl) return state.contentApiUrl;
+  try {
+    const response = await fetch('/api/config', { credentials: 'same-origin', cache: 'no-store' });
+    if (response.ok) {
+      const runtimeConfig = await response.json();
+      state.contentApiUrl = String(runtimeConfig.contentApiUrl || '').trim();
+    }
+  } catch (_) {
+    // Local static preview may not run the Vercel function.
+  }
+  if (!state.contentApiUrl) throw new Error('Thiếu CONTENT_API_URL trong Environment Variables của Vercel.');
+  return state.contentApiUrl;
+}
+
+async function api(action, data) {
+  const contentApiUrl = await resolveContentApiUrl();
+  const response = await fetch(contentApiUrl, {
+    method: 'POST', credentials: 'omit',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, data, token: state.token })
+  });
+  if (!response.ok) throw new Error(`Content API phản hồi HTTP ${response.status}.`);
+  const payload = await response.json();
+  if (!payload.ok) throw new Error(payload.error?.message || 'Có lỗi xảy ra.');
+  return payload.data;
+}
+
+function notify(message, isError = false) {
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.toggle('error-toast', isError);
+  toast.hidden = false;
+  toastTimer = setTimeout(() => { toast.hidden = true; }, 3500);
+}
+
+function field(label, value, onChange, type = 'text') {
+  const wrapper = document.createElement('label');
+  wrapper.textContent = label;
+  const input = document.createElement(type === 'textarea' ? 'textarea' : 'input');
+  input.value = value ?? '';
+  input.addEventListener('input', () => onChange(input.value));
+  wrapper.appendChild(input);
+  return wrapper;
+}
+
+function renderRecords(targetId, records, kind) {
+  const root = $(targetId);
+  root.replaceChildren();
+  if (!records.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'Chưa có dữ liệu. Hãy chạy hàm setup trong Apps Script trước.';
+    root.appendChild(empty);
+    return;
+  }
+  records.forEach(original => {
+    const record = { ...original };
+    const row = document.createElement('div');
+    row.className = 'record';
+    const isContent = kind === 'content';
+    const idKey = isContent ? 'Key' : 'Code';
+    const valueKey = isContent ? 'Value' : 'Name';
+    row.append(field(idKey, record[idKey], () => {}));
+    row.append(field(valueKey, record[valueKey], value => { record[valueKey] = value; }, isContent ? 'textarea' : 'text'));
+    const save = document.createElement('button');
+    save.textContent = 'Lưu thay đổi';
+    save.addEventListener('click', async () => {
+      save.disabled = true;
+      try {
+        await api(isContent ? 'saveContent' : 'savePackage', record);
+        notify('✦ Đã lưu thành công');
+        await loadAdmin();
+      } catch (error) {
+        notify(error.message, true);
+      } finally {
+        save.disabled = false;
+      }
+    });
+    row.append(save);
+    root.append(row);
+  });
+}
+
+function render() {
+  loginPanel.hidden = true;
+  dashboard.hidden = false;
+  $('logout').hidden = false;
+  $('identity').textContent = `${state.data.session.displayName || state.data.session.username} · ${state.data.session.role}`;
+  $('health').textContent = state.data.health.ok ? '● Hệ thống hoạt động' : '● Cần kiểm tra hệ thống';
+  $('health').classList.toggle('health-error', !state.data.health.ok);
+  renderRecords('content-list', state.data.content || [], 'content');
+  renderRecords('package-list', state.data.packages || [], 'package');
+}
+
+async function loadAdmin() {
+  state.data = await api('adminInit');
+  render();
+}
+
+$('login-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const submit = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
+  const buttonText = submit.querySelector('span');
+  $('login-error').textContent = '';
+  submit.disabled = true;
+  buttonText.textContent = '✦ Đang kết nối…';
+  try {
+    const result = await api('login', { username: $('username').value, password: $('password').value });
+    state.token = result.token;
+    sessionStorage.setItem('cafeCcpAdminToken', state.token);
+    $('password').value = '';
+    await loadAdmin();
+  } catch (error) {
+    $('login-error').textContent = error.message;
+    $('password').value = '';
+    $('password').focus();
+  } finally {
+    submit.disabled = false;
+    buttonText.textContent = '✦ Đăng nhập';
+  }
+});
+
+$('logout').addEventListener('click', async () => {
+  try { await api('logout'); } catch (_) {}
+  sessionStorage.removeItem('cafeCcpAdminToken');
+  location.reload();
+});
+
+document.querySelectorAll('[data-tab]').forEach(button => {
+  button.addEventListener('click', () => {
+    const selected = button.dataset.tab;
+    document.querySelectorAll('[data-tab]').forEach(tab => tab.classList.toggle('active', tab === button));
+    $('content-panel').hidden = selected !== 'content';
+    $('packages-panel').hidden = selected !== 'packages';
+  });
+});
+
+if (state.token) {
+  loadAdmin().catch(() => {
+    sessionStorage.removeItem('cafeCcpAdminToken');
+    state.token = '';
+  });
+}

@@ -5,6 +5,7 @@
 const appConfig = window.CAFE_CCP_CONFIG || {};
 const fallbackData = window.CAFE_CCP_FALLBACK || { packages: [] };
 let publicData = fallbackData;
+let runtimeBookingApiUrl = appConfig.bookingApiUrl || '';
 
 function formatVnd(amount) {
   return new Intl.NumberFormat('vi-VN').format(Number(amount || 0)) + 'đ';
@@ -12,6 +13,54 @@ function formatVnd(amount) {
 
 function getPackage(code) {
   return (publicData.packages || []).find(item => item.code === code);
+}
+
+function getBookingIdempotencyKey() {
+  let key = sessionStorage.getItem('cafeCcpBookingAttempt');
+  if (!key) {
+    key = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    sessionStorage.setItem('cafeCcpBookingAttempt', key);
+  }
+  return key;
+}
+
+function createPackageCard(pkg) {
+  const article = document.createElement('article');
+  article.className = `pkg-card${pkg.featured ? ' pkg-featured' : ''}`;
+  article.id = `pkg-${pkg.code}`;
+  const glow = document.createElement('div'); glow.className = 'pkg-glow'; article.appendChild(glow);
+  if (pkg.featured) { const badge = document.createElement('div'); badge.className = 'pkg-badge-featured'; badge.textContent = '⭐ Lựa chọn phổ biến'; article.appendChild(badge); }
+  const header = document.createElement('div'); header.className = 'pkg-header';
+  const iconWrap = document.createElement('div'); iconWrap.className = 'pkg-icon';
+  const icon = document.createElement('img'); icon.src = pkg.icon; icon.alt = ''; icon.className = 'pkg-icon-img'; iconWrap.appendChild(icon);
+  const tag = document.createElement('span'); tag.className = 'pkg-tag'; tag.textContent = pkg.tag || '';
+  header.append(iconWrap, tag); article.appendChild(header);
+  const name = document.createElement('h3'); name.className = 'pkg-name'; name.textContent = pkg.name; article.appendChild(name);
+  const price = document.createElement('div'); price.className = 'pkg-price';
+  const priceNumber = document.createElement('span'); priceNumber.className = 'price-num'; priceNumber.textContent = formatVnd(pkg.price);
+  const duration = document.createElement('span'); duration.className = 'price-dur'; duration.textContent = `/ ${pkg.duration} phút`; price.append(priceNumber, duration); article.appendChild(price);
+  const features = document.createElement('ul'); features.className = 'pkg-features';
+  (pkg.features || []).forEach(feature => { const item = document.createElement('li'); const star = document.createElement('span'); star.textContent = '✦'; item.append(star, document.createTextNode(` ${feature}`)); features.appendChild(item); });
+  article.appendChild(features);
+  const button = document.createElement('a'); button.href = '#book'; button.className = 'pkg-btn'; button.dataset.packageCode = pkg.code; button.textContent = pkg.featured ? 'Đặt lịch ưu tiên' : 'Chọn gói này'; article.appendChild(button);
+  return article;
+}
+
+function renderPackageViews() {
+  const grid = document.getElementById('packages-grid');
+  if (grid) grid.replaceChildren(...(publicData.packages || []).map(createPackageCard));
+  const highlights = document.querySelector('.book-highlight-row');
+  if (highlights) {
+    highlights.replaceChildren(...(publicData.packages || []).map(pkg => {
+      const item = document.createElement('div'); item.className = `book-hl${pkg.featured ? ' pkg-hl-featured' : ''}`;
+      const iconWrap = document.createElement('span'); iconWrap.className = 'bhl-icon';
+      const icon = document.createElement('img'); icon.src = pkg.icon; icon.alt = ''; icon.className = 'bhl-icon-img'; iconWrap.appendChild(icon);
+      const text = document.createElement('span'); text.append(document.createTextNode(pkg.name), document.createElement('br'));
+      const strong = document.createElement('strong'); strong.textContent = `${formatVnd(pkg.price)} / ${pkg.duration}ph`; text.appendChild(strong);
+      item.append(iconWrap, text); return item;
+    }));
+  }
+  populatePackageSelect();
 }
 
 function populatePackageSelect() {
@@ -30,7 +79,7 @@ function populatePackageSelect() {
 
 async function loadPublicData() {
   if (!appConfig.contentApiUrl) {
-    populatePackageSelect();
+    renderPackageViews();
     return;
   }
   const controller = new AbortController();
@@ -42,20 +91,26 @@ async function loadPublicData() {
     const payload = await response.json();
     if (!response.ok || !payload.ok || !Array.isArray(payload.data?.packages)) throw new Error('INVALID_PUBLIC_DATA');
     publicData = payload.data;
+    runtimeBookingApiUrl = payload.data.config?.bookingApiUrl || runtimeBookingApiUrl;
+    if (runtimeBookingApiUrl) sessionStorage.setItem('cafeCcpBookingApiUrl', runtimeBookingApiUrl);
     sessionStorage.setItem('cafeCcpPublicCache', JSON.stringify(payload.data));
   } catch (_) {
     try {
       const cached = JSON.parse(sessionStorage.getItem('cafeCcpPublicCache'));
-      if (Array.isArray(cached?.packages)) publicData = cached;
+      if (Array.isArray(cached?.packages)) {
+        publicData = cached;
+        runtimeBookingApiUrl = cached.config?.bookingApiUrl || runtimeBookingApiUrl;
+      }
     } catch (_) {
       publicData = fallbackData;
     }
   } finally {
     clearTimeout(timer);
-    populatePackageSelect();
+    renderPackageViews();
   }
 }
 
+renderPackageViews();
 loadPublicData();
 
 // ── Custom Cursor ──────────────────────────────
@@ -389,6 +444,19 @@ if (pkgCarousel && pkgPrevBtn && pkgNextBtn) {
   });
 }
 
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-package-code]');
+  if (!button) return;
+  event.preventDefault();
+  const select = document.getElementById('f-pkg');
+  if (select) {
+    select.value = button.dataset.packageCode;
+    select.dispatchEvent(new Event('change'));
+  }
+  const bookingSection = document.getElementById('book');
+  if (bookingSection) bookingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
 // ── Booking Form ──────────────────────────────────────
 const bookingForm = document.getElementById('booking-form');
 const pkgSelect = document.getElementById('f-pkg');
@@ -430,21 +498,22 @@ if (bookingForm) {
     const requestData = {
       name, phone, email, packageCode: pkg, topic, preferredDate, partySize,
       source: 'landing',
-      idempotencyKey: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
+      idempotencyKey: getBookingIdempotencyKey()
     };
 
     submitButton.disabled = true;
     bookingStatus.textContent = 'Đang gửi đăng ký…';
 
-    if (appConfig.bookingApiUrl) {
+    if (runtimeBookingApiUrl) {
       try {
-        const response = await fetch(appConfig.bookingApiUrl, {
+        const response = await fetch(runtimeBookingApiUrl, {
           method: 'POST', credentials: 'omit',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'register', data: requestData })
         });
         const payload = await response.json();
         if (!payload.ok || !payload.data?.orderId) throw new Error('BOOKING_FAILED');
+        sessionStorage.removeItem('cafeCcpBookingAttempt');
         window.location.assign(`payment.html?${new URLSearchParams({ orderId: payload.data.orderId })}`);
         return;
       } catch (_) {

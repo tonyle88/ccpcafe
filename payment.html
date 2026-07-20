@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><title>Thanh toán | Clow Cat Patronus</title>
+  <link rel="icon" href="hinh/favicon.png"><link rel="stylesheet" href="payment.css">
+</head>
+<body>
+  <main class="payment-shell">
+    <a href="index.html" class="brand">✦ Clow Cat Patronus</a>
+    <section class="payment-card" aria-labelledby="payment-title">
+      <p class="eyebrow">Đăng ký đã được ghi nhận</p><h1 id="payment-title">Thông tin thanh toán</h1>
+      <div id="payment-loading">Đang tải đơn…</div>
+      <div id="payment-details" hidden>
+        <dl><div><dt>Mã đơn</dt><dd id="order-id"></dd></div><div><dt>Gói</dt><dd id="package-name"></dd></div><div><dt>Số tiền</dt><dd id="amount"></dd></div><div><dt>Nội dung CK</dt><dd id="transfer-content"></dd></div><div><dt>Trạng thái</dt><dd id="payment-status"></dd></div></dl>
+        <div id="manual-payment-note" class="notice"><strong id="bank-name"></strong><br><span id="account-name"></span><br><span id="account-no"></span></div>
+        <button id="manual-confirm" type="button">Tôi đã chuyển khoản</button>
+      </div>
+      <p id="payment-error" class="error" role="alert"></p>
+    </section>
+  </main>
+  <script src="config.js"></script><script src="payment.js"></script>
+</body></html>

@@ -1,0 +1,1 @@
+const params=new URLSearchParams(location.search);document.getElementById('thankyou-order').textContent=params.get('orderId')||'—';document.getElementById('thankyou-status').textContent=params.get('status')||'Đã ghi nhận';

@@ -1,0 +1,5 @@
+Enabled,Code,Name,Price,Duration,Unit,Icon,Featured,Tag,Features,Booking Note,Order
+TRUE,kham-pha,Gói Khám Phá,300000,30,phút,icons/icon-sakura.svg,FALSE,Phổ biến,1 chủ đề tư vấn|Trải bài Clow chuyên sâu|Lắng nghe & định hướng|1 ly nước miễn phí,,1
+TRUE,ket-noi,Gói Kết Nối,400000,45,phút,icons/icon-star.svg,TRUE,Bán chạy nhất,2 chủ đề tư vấn|Trải bài Clow chuyên sâu|Phân tích đa chiều|1 ly nước miễn phí,,2
+TRUE,toan-dien,Gói Toàn Diện,550000,60,phút,icons/icon-orb.svg,FALSE,Sâu sắc,Nhiều chủ đề tư vấn|Trải bài toàn diện|Phân tích sâu & giải pháp|1 ly nước miễn phí,,3
+TRUE,3in1,Tư Vấn 3-in-1 Đặc Biệt,550000,60,phút,icons/icon-moon.svg,TRUE,Góc nhìn đa chiều,Kết hợp Bài Clow Bản Đồ Sao và Nhân Số Học|Đào sâu nguyên nhân cốt lõi|Lộ trình phát triển thực tế|1 ly nước miễn phí,Vui lòng cung cấp ngày giờ và nơi sinh chính xác.,4

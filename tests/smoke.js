@@ -47,10 +47,11 @@ const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilityc
 ['payment-qr','payment-mode','copy-transfer'].forEach(id=>assert(read('payment.html').includes(`id="${id}"`),`Payment UI thiếu ${id}`));
 ['PAYMENT_MODE','PAYMENT_BANK_CODE','paymentQrUrl_','Payment Transaction ID','PAYMENT_MISMATCH'].forEach(term=>assert(bookingBackend.includes(term),`Payment backend thiếu ${term}`));
 const sepayProxy=read('api/sepay-webhook.js');['SEPAY_API_KEY','PAYMENT_WEBHOOK_SECRET','timingSafeEqual','Apikey'].forEach(term=>assert(sepayProxy.includes(term),`SePay proxy thiếu ${term}`));
-assert(read('vercel.json').includes('https://img.vietqr.io'),'CSP payment phải cho phép ảnh QR VietQR');
+const vercelConfig=JSON.parse(read('vercel.json'));const cspHeaders=vercelConfig.headers.flatMap(rule=>rule.headers).filter(header=>header.key==='Content-Security-Policy');assert(cspHeaders.every(header=>header.value.includes('https://img.vietqr.io')),'Mọi CSP áp dụng cho payment phải cho phép ảnh QR VietQR');
+assert(paymentScript.includes("elements.qr.style.display = qrUrl ? 'block' : 'none'"),'Payment phải ẩn ảnh QR lỗi thay vì giữ khung trắng');
 const thankyouScript=read('thankyou.js');assert(thankyouScript.includes("url.searchParams.set('action', 'checkPayment')"),'Thank-you phải xác minh trạng thái từ backend');assert(!thankyouScript.includes("params.get('status')"),'Thank-you không được tin status từ URL');
 ['thankyou-package','thankyou-amount','next-heading'].forEach(id=>assert(read('thankyou.html').includes(`id="${id}"`),`Thank-you chuyên nghiệp thiếu ${id}`));
 ['booking-success-modal','booking-success-payment','booking-success-countdown'].forEach(id=>assert(html.includes(`id="${id}"`),`Popup đăng ký thiếu ${id}`));
 ['bookingCustomerEmailHtml_','PUBLIC_SITE_URL','htmlBody'].forEach(term=>assert(bookingBackend.includes(term),`Email booking HTML thiếu ${term}`));
-JSON.parse(read('vercel.json'));JSON.parse(read('package.json'));JSON.parse(read('apps-script/content-admin/appsscript.json'));JSON.parse(read('apps-script/booking-payment/appsscript.json'));
+JSON.parse(read('package.json'));JSON.parse(read('apps-script/content-admin/appsscript.json'));JSON.parse(read('apps-script/booking-payment/appsscript.json'));
 console.log(`Smoke checks passed: ${packages.length} packages, configs and deployment artifacts valid.`);

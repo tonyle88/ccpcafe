@@ -70,7 +70,9 @@ function render(order) {
   elements.accountNo.textContent = order.payment?.accountNo || '';
   const qrUrl = order.payment?.qrUrl || '';
   elements.qr.hidden = !qrUrl;
+  elements.qr.style.display = qrUrl ? 'block' : 'none';
   elements.qrUnavailable.hidden = Boolean(qrUrl);
+  elements.qrUnavailable.style.display = qrUrl ? 'none' : 'block';
   if (qrUrl && elements.qr.src !== qrUrl) elements.qr.src = qrUrl;
   const reviewing = order.status === 'PAYMENT_REVIEW';
   elements.confirm.disabled = reviewing || STOP_STATUSES.has(order.status);
@@ -127,7 +129,9 @@ elements.copy.addEventListener('click', async () => {
 
 elements.qr.addEventListener('error', () => {
   elements.qr.hidden = true;
+  elements.qr.style.display = 'none';
   elements.qrUnavailable.hidden = false;
+  elements.qrUnavailable.style.display = 'block';
 });
 
 document.addEventListener('visibilitychange', () => {

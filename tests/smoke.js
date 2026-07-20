@@ -10,6 +10,9 @@ const html=read('index.html');['config.js','data.js','script.js'].forEach(file=>
 const bookingBackend=read('apps-script/booking-payment/Code.gs');packages.forEach(item=>assert(bookingBackend.includes(`'${item.code}'`),`Backend thiếu package ${item.code}`));
 const contentBackend=read('apps-script/content-admin/Code.gs');['saveNavigation','saveSection'].forEach(action=>assert(contentBackend.includes(`body.action === '${action}'`),`Content backend thiếu action ${action}`));
 assert(contentBackend.includes("!/^https:\\/\\//i.test(href)"),'Navigation phải chặn URL không an toàn');
+['contentPublic_','navigationPublic_','sectionPublic_'].forEach(mapper=>assert(contentBackend.includes(`.map(${mapper})`),`Public API thiếu allowlist mapper ${mapper}`));
+assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v2'"),'Public cache key phải tăng khi contract đổi');
 const adminHtml=read('admin/index.html');['navigation-panel','sections-panel'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thiếu panel ${id}`));
+const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));
 JSON.parse(read('vercel.json'));JSON.parse(read('package.json'));JSON.parse(read('apps-script/content-admin/appsscript.json'));JSON.parse(read('apps-script/booking-payment/appsscript.json'));
 console.log(`Smoke checks passed: ${packages.length} packages, configs and deployment artifacts valid.`);

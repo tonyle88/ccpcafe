@@ -8,6 +8,7 @@ const CONTENT_SCHEMA = Object.freeze({
   'Audit Log': ['Timestamp','Action','Status','Username','Role','Target Type','Target ID','Details','Message'],
   'Backup Log': ['Timestamp','Type','Status','Username','File ID','File Name','File URL','Details','Message']
 });
+const PUBLIC_CACHE_KEY = 'public-init-v2';
 
 function doGet(e) {
   const action = String((e && e.parameter && e.parameter.action) || 'health');
@@ -60,17 +61,17 @@ function bootstrapAdminFromProperties() {
 
 function publicInit_() {
   const cache = CacheService.getScriptCache();
-  const cached = cache.get('public-init-v1');
+  const cached = cache.get(PUBLIC_CACHE_KEY);
   if (cached) return JSON.parse(cached);
   const spreadsheet = getContentSpreadsheet_();
   const result = {
-    content: rowsAsObjects_(spreadsheet.getSheetByName('Content')).filter(row => truthy_(row.Enabled)),
+    content: rowsAsObjects_(spreadsheet.getSheetByName('Content')).filter(row => truthy_(row.Enabled)).map(contentPublic_),
     packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')).filter(row => truthy_(row.Enabled)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(packagePublic_),
-    navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')).filter(row => truthy_(row.Enabled)).sort((a,b) => Number(a.Order)-Number(b.Order)),
-    sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')).filter(row => truthy_(row.Visible)).sort((a,b) => Number(a.Order)-Number(b.Order)),
+    navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')).filter(row => truthy_(row.Enabled)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(navigationPublic_),
+    sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')).filter(row => truthy_(row.Visible)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(sectionPublic_),
     config: { bookingApiUrl: PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '' }
   };
-  cache.put('public-init-v1', JSON.stringify(result), 300);
+  cache.put(PUBLIC_CACHE_KEY, JSON.stringify(result), 300);
   return result;
 }
 
@@ -134,7 +135,7 @@ function saveRow_(sheetName, data, session) {
     return data[header] === undefined ? '' : data[header];
   });
   if (rowNumber) sheet.getRange(rowNumber,1,1,headers.length).setValues([record]); else sheet.appendRow(record);
-  CacheService.getScriptCache().remove('public-init-v1');
+  CacheService.getScriptCache().remove(PUBLIC_CACHE_KEY);
   audit_('save','success',session.username,session.role,sheetName,key,'','Đã lưu');
   return { saved: true, id: key };
 }
@@ -160,6 +161,14 @@ function health_() {
 }
 
 function seedContent_(spreadsheet) {
+  const content = spreadsheet.getSheetByName('Content');
+  if (content.getLastRow() === 1) {
+    content.getRange(2,1,3,10).setValues([
+      [true,'hero.subtitle','hero','Dòng kêu gọi ngắn','.hero-sub','text','','Book đi chờ chi!!!',new Date(),'setup'],
+      [true,'about.title','about','Tiêu đề giới thiệu','.section-about .section-title','text','','Bài Clow – Gương soi tâm hồn',new Date(),'setup'],
+      [true,'packages.title','packages','Tiêu đề gói dịch vụ','.section-packages .section-title','text','','Chọn hành trình của bạn',new Date(),'setup']
+    ]);
+  }
   const packages = spreadsheet.getSheetByName('Service Packages');
   if (packages.getLastRow() === 1) {
     packages.getRange(2,1,4,14).setValues([
@@ -171,6 +180,16 @@ function seedContent_(spreadsheet) {
   }
   const sections = spreadsheet.getSheetByName('Section Order');
   if (sections.getLastRow() === 1) sections.getRange(2,1,8,3).setValues(['hero','about','instructor','packages','process','feedback','book','footer'].map((key,index) => [key,index+1,true]));
+  const navigation = spreadsheet.getSheetByName('Navigation');
+  if (navigation.getLastRow() === 1) {
+    navigation.getRange(2,1,5,8).setValues([
+      ['about','Về chúng tôi','#about',true,1,'link',new Date(),'setup'],
+      ['packages','Gói dịch vụ','#packages',true,2,'link',new Date(),'setup'],
+      ['process','Quy trình','#process',true,3,'link',new Date(),'setup'],
+      ['feedback','Cảm nhận','#feedback',true,4,'link',new Date(),'setup'],
+      ['book','Đặt lịch ngay ✨','#book',true,5,'cta',new Date(),'setup']
+    ]);
+  }
 }
 
 function ensureSheet_(spreadsheet, name, headers) {
@@ -179,7 +198,10 @@ function ensureSheet_(spreadsheet, name, headers) {
 }
 function getContentSpreadsheet_() { const id=PropertiesService.getScriptProperties().getProperty('CONTENT_SPREADSHEET_ID'); if(id)return SpreadsheetApp.openById(id); const active=SpreadsheetApp.getActiveSpreadsheet(); if(!active)throw appError_('CONFIG_ERROR','Thiếu CONTENT_SPREADSHEET_ID trong Script Properties.'); return active; }
 function rowsAsObjects_(sheet) { if (!sheet || sheet.getLastRow() < 2) return []; const values=sheet.getDataRange().getValues(), headers=values.shift(); return values.map(row => headers.reduce((obj,key,index) => (obj[key]=row[index],obj),{})); }
+function contentPublic_(row) { return { key:String(row.Key), selector:String(row.Selector), type:String(row.Type || 'text'), attribute:String(row.Attribute || ''), value:String(row.Value || '') }; }
 function packagePublic_(row) { return { code:String(row.Code), name:String(row.Name), price:Number(row.Price), duration:Number(row.Duration), unit:String(row.Unit), icon:String(row.Icon), featured:truthy_(row.Featured), tag:String(row.Tag), features:String(row.Features).split('|').filter(Boolean), bookingNote:String(row['Booking Note'] || '') }; }
+function navigationPublic_(row) { return { key:String(row.Key), label:String(row.Label), href:String(row.Href), order:Number(row.Order), type:String(row.Type || '') }; }
+function sectionPublic_(row) { return { key:String(row['Section Key']), order:Number(row.Order) }; }
 function truthy_(value) { return value === true || String(value).toLowerCase() === 'true' || String(value) === '1'; }
 function digestPassword_(password,salt) { return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + password, Utilities.Charset.UTF_8)); }
 function createPasswordHash_(password) { const salt=Utilities.getUuid().replace(/-/g,''); return salt+'$'+digestPassword_(password,salt); }

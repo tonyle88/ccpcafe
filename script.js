@@ -15,6 +15,68 @@ function getPackage(code) {
   return (publicData.packages || []).find(item => item.code === code);
 }
 
+function isSafePublicUrl(value) {
+  const url = String(value || '').trim();
+  return url.startsWith('#') || (url.startsWith('/') && !url.startsWith('//')) || /^https:\/\//i.test(url);
+}
+
+function renderContent() {
+  const allowedAttributes = new Set(['alt', 'aria-label', 'href', 'src', 'title']);
+  (publicData.content || []).forEach(item => {
+    if (!item?.selector) return;
+    let target;
+    try { target = document.querySelector(item.selector); } catch (_) { return; }
+    if (!target) return;
+    if (item.type === 'attribute' && allowedAttributes.has(item.attribute)) {
+      if ((item.attribute === 'href' || item.attribute === 'src') && !isSafePublicUrl(item.value)) return;
+      target.setAttribute(item.attribute, item.value);
+      return;
+    }
+    target.textContent = item.value ?? '';
+  });
+}
+
+function createNavigationLink(item) {
+  if (!item?.label || !isSafePublicUrl(item.href)) return null;
+  const link = document.createElement('a');
+  link.href = item.href;
+  link.textContent = item.label;
+  if (item.type === 'cta') link.className = 'nav-cta';
+  if (/^https:\/\//i.test(item.href)) {
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+  }
+  return link;
+}
+
+function renderNavigation() {
+  if (!Array.isArray(publicData.navigation)) return;
+  const desktop = document.querySelector('.nav-links');
+  const mobile = document.getElementById('mobile-menu');
+  const links = publicData.navigation.map(createNavigationLink).filter(Boolean);
+  if (desktop) desktop.replaceChildren(...links.map(link => { const item = document.createElement('li'); item.appendChild(link); return item; }));
+  if (mobile) mobile.replaceChildren(...publicData.navigation.map(createNavigationLink).filter(Boolean));
+}
+
+function renderSections() {
+  if (!Array.isArray(publicData.sections)) return;
+  const footer = document.getElementById('footer');
+  const visibleKeys = new Set(publicData.sections.map(item => item.key));
+  document.querySelectorAll('section[id]').forEach(section => { section.hidden = !visibleKeys.has(section.id); });
+  if (!footer?.parentNode) return;
+  publicData.sections.forEach(item => {
+    const section = document.getElementById(item.key);
+    if (section?.tagName === 'SECTION') footer.parentNode.insertBefore(section, footer);
+  });
+}
+
+function renderPublicData() {
+  renderContent();
+  renderNavigation();
+  renderSections();
+  renderPackageViews();
+}
+
 function getBookingIdempotencyKey() {
   let key = sessionStorage.getItem('cafeCcpBookingAttempt');
   if (!key) {
@@ -79,7 +141,7 @@ function populatePackageSelect() {
 
 async function loadPublicData() {
   if (!appConfig.contentApiUrl) {
-    renderPackageViews();
+    renderPublicData();
     return;
   }
   const controller = new AbortController();
@@ -106,11 +168,11 @@ async function loadPublicData() {
     }
   } finally {
     clearTimeout(timer);
-    renderPackageViews();
+    renderPublicData();
   }
 }
 
-renderPackageViews();
+renderPublicData();
 loadPublicData();
 
 // ── Custom Cursor ──────────────────────────────
@@ -222,15 +284,14 @@ burger.addEventListener('click', () => {
   }
 });
 
-// Close menu on link click
-mobileMenu.querySelectorAll('a').forEach(a => {
-  a.addEventListener('click', () => {
-    menuOpen = false;
-    mobileMenu.classList.remove('open');
-    burger.setAttribute('aria-expanded', 'false');
-    const spans = burger.querySelectorAll('span');
-    spans.forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
-  });
+// Close menu on link click, including links rendered later from the CMS.
+mobileMenu.addEventListener('click', event => {
+  if (!event.target.closest('a')) return;
+  menuOpen = false;
+  mobileMenu.classList.remove('open');
+  burger.setAttribute('aria-expanded', 'false');
+  const spans = burger.querySelectorAll('span');
+  spans.forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
 });
 
 // ── Scroll Reveal ─────────────────────────────
@@ -286,16 +347,16 @@ document.querySelectorAll('.process-step').forEach((step, i) => {
 });
 
 // ── Smooth Anchor Scrolling ───────────────────
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', e => {
-    const target = document.querySelector(anchor.getAttribute('href'));
-    if (target) {
-      e.preventDefault();
-      const navH = navbar.offsetHeight;
-      const top  = target.getBoundingClientRect().top + window.scrollY - navH - 8;
-      window.scrollTo({ top, behavior: 'smooth' });
-    }
-  });
+document.addEventListener('click', e => {
+  const anchor = e.target.closest('a[href^="#"]');
+  if (!anchor) return;
+  const target = document.querySelector(anchor.getAttribute('href'));
+  if (target) {
+    e.preventDefault();
+    const navH = navbar.offsetHeight;
+    const top = target.getBoundingClientRect().top + window.scrollY - navH - 8;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
 });
 
 const scrollTopBtn = document.getElementById('scroll-to-top');
@@ -368,8 +429,6 @@ document.head.appendChild(style);
 
 // ── Active nav highlighting ────────────────────
 const sections = document.querySelectorAll('section[id]');
-const navLinks  = document.querySelectorAll('.nav-links a, #mobile-menu a');
-
 function updateActiveNav() {
   let current = '';
   sections.forEach(section => {
@@ -378,7 +437,7 @@ function updateActiveNav() {
       current = section.getAttribute('id');
     }
   });
-  navLinks.forEach(link => {
+  document.querySelectorAll('.nav-links a, #mobile-menu a').forEach(link => {
     link.classList.toggle('active', link.getAttribute('href') === `#${current}`);
   });
 }

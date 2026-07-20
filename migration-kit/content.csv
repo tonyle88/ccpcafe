@@ -1,0 +1,4 @@
+Enabled,Key,Section,Description,Selector,Type,Attribute,Value
+TRUE,hero.subtitle,hero,Dòng kêu gọi ngắn,.hero-sub,text,,Book đi chờ chi!!!
+TRUE,about.title,about,Tiêu đề giới thiệu,.section-about .section-title,text,,Bài Clow – Gương soi tâm hồn
+TRUE,packages.title,packages,Tiêu đề gói dịch vụ,.section-packages .section-title,text,,Chọn hành trình của bạn

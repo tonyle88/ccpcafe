@@ -157,8 +157,7 @@ function render() {
   dashboard.hidden = false;
   $('logout').hidden = false;
   $('identity').textContent = `${state.data.session.displayName || state.data.session.username} · ${state.data.session.role}`;
-  $('health').textContent = state.data.health.ok ? '● Hệ thống hoạt động' : '● Cần kiểm tra hệ thống';
-  $('health').classList.toggle('health-error', !state.data.health.ok);
+  renderHealthOverview();
   renderRecords('content-list', state.data.content || [], 'content');
   renderRecords('package-list', state.data.packages || [], 'package');
   renderRecords('navigation-list', state.data.navigation || [], 'navigation');
@@ -166,6 +165,39 @@ function render() {
   const isAdmin = state.data.session.role === 'admin';
   $('users-tab').hidden = !isAdmin;
   if (isAdmin) renderUsers(state.data.users || []);
+}
+
+function renderHealthOverview() {
+  const contentHealth = state.data.health?.content || state.data.health || {};
+  const bookingHealth = state.data.health?.booking || {};
+  const allHealthy = contentHealth.ok === true && bookingHealth.ok === true;
+  $('health').textContent = allHealthy ? '● Hệ thống hoạt động' : '● Cần kiểm tra hệ thống';
+  $('health').classList.toggle('health-error', !allHealthy);
+  $('content-health').textContent = contentHealth.ok ? 'Hoạt động' : 'Cần kiểm tra';
+  $('content-health-detail').textContent = `${(contentHealth.checks || []).filter(check => check.ok).length}/${(contentHealth.checks || []).length} sheet sẵn sàng`;
+  $('booking-health').textContent = bookingHealth.ok ? 'Hoạt động' : (bookingHealth.configured === false ? 'Chưa cấu hình' : 'Không khả dụng');
+  $('booking-health-detail').textContent = bookingHealth.ok ? `Email ${bookingHealth.emailConfigured ? '✓' : '—'} · Thanh toán ${bookingHealth.paymentConfigured ? '✓' : '—'}` : (bookingHealth.code || 'UNKNOWN');
+  const backup = state.data.operations?.lastBackup;
+  $('backup-status').textContent = backup ? (backup.status || 'Không rõ') : 'Chưa có backup';
+  $('backup-detail').textContent = backup ? [backup.type, formatTimestamp(backup.timestamp), backup.fileName].filter(Boolean).join(' · ') : 'Sẽ cập nhật sau lần backup đầu tiên';
+  const errorsRoot = $('recent-errors');
+  errorsRoot.replaceChildren();
+  const errors = state.data.operations?.recentErrors || [];
+  if (!errors.length) {
+    const empty = document.createElement('p'); empty.textContent = 'Không có lỗi audit gần đây.'; errorsRoot.appendChild(empty); return;
+  }
+  errors.forEach(error => {
+    const item = document.createElement('p');
+    const label = document.createElement('strong'); label.textContent = `${error.action || 'unknown'} · ${error.targetType || 'system'}`;
+    const detail = document.createElement('span'); detail.textContent = `${error.message || 'Không có mô tả'} · ${formatTimestamp(error.timestamp)}`;
+    item.append(label, detail); errorsRoot.appendChild(item);
+  });
+}
+
+function formatTimestamp(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('vi-VN');
 }
 
 async function loadAdmin() {

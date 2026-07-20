@@ -65,6 +65,12 @@
         <div><span class="section-kicker">✦ Bảng điều khiển</span><h1>Quản trị nội dung</h1><p id="identity"></p></div>
         <div id="health" class="health-pill"></div>
       </div>
+      <section class="dashboard-overview" aria-label="Tình trạng hệ thống">
+        <article class="status-card"><span class="section-kicker">Content API</span><strong id="content-health">Đang kiểm tra…</strong><small id="content-health-detail"></small></article>
+        <article class="status-card"><span class="section-kicker">Booking API</span><strong id="booking-health">Đang kiểm tra…</strong><small id="booking-health-detail"></small></article>
+        <article class="status-card"><span class="section-kicker">Backup gần nhất</span><strong id="backup-status">Chưa có dữ liệu</strong><small id="backup-detail"></small></article>
+        <article class="status-card status-card-wide"><span class="section-kicker">Lỗi gần nhất đã lọc</span><div id="recent-errors" class="recent-errors"></div></article>
+      </section>
       <nav class="tabs" aria-label="Khu vực quản trị">
         <button class="tab-button active" data-tab="content">Nội dung</button>
         <button class="tab-button" data-tab="packages">Gói dịch vụ</button>

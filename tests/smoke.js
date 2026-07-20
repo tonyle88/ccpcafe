@@ -15,8 +15,11 @@ assert(contentBackend.includes("requireSession_(body.token, ['admin'])"),'API us
 ['Bạn không thể tự hạ quyền','Phải giữ ít nhất một admin'].forEach(message=>assert(contentBackend.includes(message),`User guard thiếu: ${message}`));
 ['contentPublic_','navigationPublic_','sectionPublic_'].forEach(mapper=>assert(contentBackend.includes(`.map(${mapper})`),`Public API thiếu allowlist mapper ${mapper}`));
 assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v2'"),'Public cache key phải tăng khi contract đổi');
+['bookingRemoteHealth_','operationsSummary_','UrlFetchApp.fetch'].forEach(term=>assert(contentBackend.includes(term),`Admin dashboard backend thiếu ${term}`));
+assert(contentBackend.includes('script\\.google\\.com|script\\.googleusercontent\\.com'),'Booking health endpoint phải giới hạn Google Apps Script');
 const adminHtml=read('admin/index.html');['navigation-panel','sections-panel','users-panel'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thiếu panel ${id}`));
 const adminScript=read('admin/app.js');assert(adminScript.includes("await api('saveUser', record)"),'Admin UI thiếu lưu user');assert(!adminScript.includes('Password Hash'),'Admin UI không được đọc hoặc hiển thị password hash');
+['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
 const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));
 const thankyouScript=read('thankyou.js');assert(thankyouScript.includes("url.searchParams.set('action', 'checkPayment')"),'Thank-you phải xác minh trạng thái từ backend');assert(!thankyouScript.includes("params.get('status')"),'Thank-you không được tin status từ URL');

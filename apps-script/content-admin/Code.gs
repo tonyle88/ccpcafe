@@ -119,9 +119,34 @@ function requireSession_(token, roles) {
 
 function adminInit_(session) {
   const spreadsheet = getContentSpreadsheet_();
-  const data = { session: session, health: health_(), content: rowsAsObjects_(spreadsheet.getSheetByName('Content')), packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')), navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')), sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')) };
+  const data = { session: session, health:{content:health_(),booking:bookingRemoteHealth_()}, operations:operationsSummary_(spreadsheet,session), content: rowsAsObjects_(spreadsheet.getSheetByName('Content')), packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')), navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')), sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')) };
   if (session.role === 'admin') data.users = rowsAsObjects_(spreadsheet.getSheetByName('Admin Users')).map(user => ({ Username:user.Username, Role:user.Role, Status:user.Status, 'Display Name':user['Display Name'], 'Last Login':user['Last Login'] }));
   return data;
+}
+
+function bookingRemoteHealth_() {
+  const endpoint = String(PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '').trim();
+  if (!endpoint) return { service:'booking-payment', configured:false, ok:false, code:'NOT_CONFIGURED' };
+  if (!/^https:\/\/(script\.google\.com|script\.googleusercontent\.com)\//i.test(endpoint)) return { service:'booking-payment', configured:true, ok:false, code:'INVALID_ENDPOINT' };
+  try {
+    const separator = endpoint.indexOf('?') >= 0 ? '&' : '?';
+    const response = UrlFetchApp.fetch(endpoint + separator + 'action=health', { muteHttpExceptions:true, followRedirects:true });
+    if (response.getResponseCode() !== 200) return { service:'booking-payment', configured:true, ok:false, code:'HTTP_ERROR' };
+    const payload = JSON.parse(response.getContentText());
+    if (!payload.ok || !payload.data) return { service:'booking-payment', configured:true, ok:false, code:'INVALID_RESPONSE' };
+    const data = payload.data;
+    return { service:'booking-payment', configured:true, ok:data.ok === true, paymentConfigured:data.paymentConfigured === true, emailConfigured:data.emailConfigured === true, checks:Array.isArray(data.checks) ? data.checks.slice(0,10).map(check => ({name:String(check.name),ok:check.ok === true})) : [] };
+  } catch (_) { return { service:'booking-payment', configured:true, ok:false, code:'UNAVAILABLE' }; }
+}
+
+function operationsSummary_(spreadsheet, session) {
+  const auditRows = rowsAsObjects_(spreadsheet.getSheetByName('Audit Log')).filter(row => String(row.Status).toLowerCase() !== 'success').slice(-5).reverse();
+  const backupRows = rowsAsObjects_(spreadsheet.getSheetByName('Backup Log'));
+  const lastBackup = backupRows.length ? backupRows[backupRows.length - 1] : null;
+  return {
+    recentErrors:auditRows.map(row => ({ timestamp:row.Timestamp, action:String(row.Action), targetType:String(row['Target Type']), message:String(row.Message || '').slice(0,200) })),
+    lastBackup:lastBackup ? { timestamp:lastBackup.Timestamp, type:String(lastBackup.Type), status:String(lastBackup.Status), fileName:session.role === 'admin' ? String(lastBackup['File Name'] || '') : '' } : null
+  };
 }
 
 function saveUser_(data, session) {

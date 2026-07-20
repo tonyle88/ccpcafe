@@ -52,8 +52,23 @@ function validateBooking_(data) {
   return clean;
 }
 
-function checkPayment_(orderId) { const row=findBooking_('Order ID',String(orderId||'')); if(!row) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.'); return publicOrder_(row); }
-function manualConfirm_(data) { const row=findBooking_('Order ID',String(data.orderId||''),true); if(!row) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.'); if(row.object.Status==='PENDING_PAYMENT') row.sheet.getRange(row.rowNumber,BOOKING_HEADERS.indexOf('Status')+1).setValue('PAYMENT_REVIEW'); return { orderId:row.object['Order ID'],status:'PAYMENT_REVIEW' }; }
+function normalizeOrderId_(value) { const orderId=String(value||'').trim().toUpperCase(); if(!/^CCP-[0-9]{8}-[A-F0-9]{32}$/.test(orderId)) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.'); return orderId; }
+function checkPayment_(orderId) { const row=findBooking_('Order ID',normalizeOrderId_(orderId)); if(!row) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.'); return publicOrder_(row); }
+function manualConfirm_(data) {
+  const orderId=normalizeOrderId_(data.orderId), lock=LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const row=findBooking_('Order ID',orderId,true);
+    if(!row) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.');
+    const current=String(row.object.Status||'');
+    if(current==='PENDING_PAYMENT') {
+      row.sheet.getRange(row.rowNumber,BOOKING_HEADERS.indexOf('Status')+1).setValue('PAYMENT_REVIEW');
+      row.sheet.getRange(row.rowNumber,BOOKING_HEADERS.indexOf('Last Updated At')+1).setValue(new Date());
+      return {orderId:orderId,status:'PAYMENT_REVIEW'};
+    }
+    if(['PAYMENT_REVIEW','PAID','CONFIRMED','COMPLETED'].includes(current)) return {orderId:orderId,status:current};
+    throw bookingError_('INVALID_STATE','Đơn không thể chuyển sang chờ đối soát.');
+  } finally { lock.releaseLock(); }
+}
 function paymentWebhook_(data,signature) { const secret=PropertiesService.getScriptProperties().getProperty('PAYMENT_WEBHOOK_SECRET'); if(!secret||signature!==secret) throw bookingError_('FORBIDDEN','Webhook không hợp lệ.'); throw bookingError_('NOT_IMPLEMENTED','Cần tích hợp chữ ký theo nhà cung cấp thanh toán đã chọn.'); }
 function publicOrder_(record) { const row=record.object||record, properties=PropertiesService.getScriptProperties(); return { orderId:row['Order ID'], packageName:row['Package Name'], amount:Number(row['Final Amount']), currency:row.Currency, status:row.Status, transferContent:row['Transfer Content'], payment:{ bankName:properties.getProperty('PAYMENT_BANK_NAME')||'', accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'', accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'' } }; }
 function findBooking_(header,value,withMeta) { const sheet=getBookingSpreadsheet_().getSheetByName('Bookings'); if(!sheet||sheet.getLastRow()<2)return null; const values=sheet.getDataRange().getValues(), headers=values.shift(), index=headers.indexOf(header); for(let i=0;i<values.length;i++)if(String(values[i][index])===value){const object=headers.reduce((o,k,j)=>(o[k]=values[i][j],o),{});return withMeta?{object:object,sheet:sheet,rowNumber:i+2}:object;} return null; }

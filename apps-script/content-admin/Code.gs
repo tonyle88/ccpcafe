@@ -31,6 +31,7 @@ function doPost(e) {
     if (body.action === 'savePackage') return jsonResponse_(true, saveRow_('Service Packages', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveNavigation') return jsonResponse_(true, saveRow_('Navigation', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveSection') return jsonResponse_(true, saveRow_('Section Order', body.data, requireSession_(body.token, ['admin','editor'])));
+    if (body.action === 'saveUser') return jsonResponse_(true, saveUser_(body.data || {}, requireSession_(body.token, ['admin'])));
     return jsonResponse_(false, null, 'NOT_FOUND', 'Action không tồn tại.');
   } catch (error) {
     return jsonResponse_(false, null, error.code || 'INTERNAL_ERROR', safeMessage_(error));
@@ -93,7 +94,9 @@ function login_(data) {
   }
   cache.remove(rateKey);
   const token = Utilities.getUuid() + Utilities.getUuid();
-  CacheService.getScriptCache().put('session:' + token, JSON.stringify({ username: user.Username, role: user.Role, displayName: user['Display Name'] }), 21600);
+  CacheService.getScriptCache().put('session:' + token, JSON.stringify({ username: user.Username }), 21600);
+  const userRow = users.findIndex(item => String(item.Username).toLowerCase() === username) + 2;
+  usersSheet.getRange(userRow, CONTENT_SCHEMA['Admin Users'].indexOf('Last Login') + 1).setValue(new Date());
   audit_('login','success',user.Username,user.Role,'user',user.Username,'','Đăng nhập thành công');
   return { token: token, username: user.Username, role: user.Role, displayName: user['Display Name'], expiresIn: 21600 };
 }
@@ -106,7 +109,10 @@ function logout_(token) {
 function requireSession_(token, roles) {
   const raw = token && CacheService.getScriptCache().get('session:' + token);
   if (!raw) throw appError_('AUTH_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
-  const session = JSON.parse(raw);
+  const cached = JSON.parse(raw);
+  const user = rowsAsObjects_(getContentSpreadsheet_().getSheetByName('Admin Users')).find(item => String(item.Username).toLowerCase() === String(cached.username).toLowerCase() && String(item.Status).toLowerCase() === 'active');
+  if (!user) throw appError_('AUTH_REQUIRED', 'Tài khoản không còn hoạt động.');
+  const session = { username:user.Username, role:String(user.Role).toLowerCase(), displayName:user['Display Name'] };
   if (roles && roles.indexOf(session.role) < 0) throw appError_('FORBIDDEN', 'Bạn không có quyền thực hiện thao tác này.');
   return session;
 }
@@ -116,6 +122,31 @@ function adminInit_(session) {
   const data = { session: session, health: health_(), content: rowsAsObjects_(spreadsheet.getSheetByName('Content')), packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')), navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')), sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')) };
   if (session.role === 'admin') data.users = rowsAsObjects_(spreadsheet.getSheetByName('Admin Users')).map(user => ({ Username:user.Username, Role:user.Role, Status:user.Status, 'Display Name':user['Display Name'], 'Last Login':user['Last Login'] }));
   return data;
+}
+
+function saveUser_(data, session) {
+  const sheet = getContentSpreadsheet_().getSheetByName('Admin Users');
+  const headers = CONTENT_SCHEMA['Admin Users'];
+  const username = String(data.Username || '').trim().toLowerCase();
+  const role = String(data.Role || '').trim().toLowerCase();
+  const status = String(data.Status || '').trim().toLowerCase();
+  const displayName = String(data['Display Name'] || '').trim();
+  const password = String(data.Password || '');
+  if (!/^[a-z0-9._-]{3,64}$/.test(username)) throw appError_('VALIDATION_ERROR', 'Username phải dài 3–64 ký tự và chỉ gồm chữ thường, số, dấu chấm, gạch dưới hoặc gạch ngang.');
+  if (!['admin','editor'].includes(role) || !['active','disabled'].includes(status)) throw appError_('VALIDATION_ERROR', 'Role hoặc trạng thái không hợp lệ.');
+  if (!displayName || displayName.length > 100) throw appError_('VALIDATION_ERROR', 'Tên hiển thị không hợp lệ.');
+  const rows = rowsAsObjects_(sheet);
+  const existingIndex = rows.findIndex(user => String(user.Username).toLowerCase() === username);
+  const existing = existingIndex >= 0 ? rows[existingIndex] : null;
+  if (!existing && password.length < 12) throw appError_('VALIDATION_ERROR', 'User mới cần mật khẩu tối thiểu 12 ký tự.');
+  if (password && password.length < 12) throw appError_('VALIDATION_ERROR', 'Mật khẩu mới phải có tối thiểu 12 ký tự.');
+  if (username === String(session.username).toLowerCase() && (role !== 'admin' || status !== 'active')) throw appError_('VALIDATION_ERROR', 'Bạn không thể tự hạ quyền hoặc vô hiệu hóa tài khoản đang dùng.');
+  const otherActiveAdmins = rows.filter(user => String(user.Username).toLowerCase() !== username && String(user.Role).toLowerCase() === 'admin' && String(user.Status).toLowerCase() === 'active').length;
+  if (existing && String(existing.Role).toLowerCase() === 'admin' && String(existing.Status).toLowerCase() === 'active' && (role !== 'admin' || status !== 'active') && otherActiveAdmins === 0) throw appError_('VALIDATION_ERROR', 'Phải giữ ít nhất một admin đang hoạt động.');
+  const record = [username, password ? createPasswordHash_(password) : existing['Password Hash'], role, status, displayName, existing ? existing['Created At'] : new Date(), new Date(), existing ? existing['Last Login'] : ''];
+  if (existing) sheet.getRange(existingIndex + 2, 1, 1, headers.length).setValues([record]); else sheet.appendRow(record);
+  audit_('save','success',session.username,session.role,'user',username,'role='+role+';status='+status,'Đã lưu user');
+  return { saved:true, username:username };
 }
 
 function saveRow_(sheetName, data, session) {

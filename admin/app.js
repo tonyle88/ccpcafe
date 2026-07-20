@@ -34,7 +34,11 @@ async function api(action, data) {
   });
   if (!response.ok) throw new Error(`Content API phản hồi HTTP ${response.status}.`);
   const payload = await response.json();
-  if (!payload.ok) throw new Error(payload.error?.message || 'Có lỗi xảy ra.');
+  if (!payload.ok) {
+    const error = new Error(payload.error?.message || 'Có lỗi xảy ra.');
+    error.requestId = payload.requestId;
+    throw error;
+  }
   return payload.data;
 }
 
@@ -92,7 +96,7 @@ function renderRecords(targetId, records, kind) {
         notify('✦ Đã lưu thành công');
         await loadAdmin();
       } catch (error) {
-        notify(error.message, true);
+        notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true);
       } finally {
         save.disabled = false;
       }
@@ -100,6 +104,52 @@ function renderRecords(targetId, records, kind) {
     row.append(save);
     root.append(row);
   });
+}
+
+function renderUsers(records) {
+  const root = $('user-list');
+  root.replaceChildren();
+  records.forEach(original => {
+    const record = { ...original, Password:'' };
+    const isNew = !record.Username;
+    const row = document.createElement('div');
+    row.className = 'record';
+    row.append(field('Username', record.Username, value => { record.Username = value; }, 'text', !isNew));
+    row.append(field('Tên hiển thị', record['Display Name'], value => { record['Display Name'] = value; }));
+    row.append(selectField('Role', record.Role || 'editor', ['admin','editor'], value => { record.Role = value; }));
+    row.append(selectField('Trạng thái', record.Status || 'active', ['active','disabled'], value => { record.Status = value; }));
+    row.append(field(isNew ? 'Mật khẩu' : 'Mật khẩu mới (không bắt buộc)', '', value => { record.Password = value; }, 'password'));
+    const save = document.createElement('button');
+    save.textContent = isNew ? 'Tạo người dùng' : 'Lưu thay đổi';
+    save.addEventListener('click', async () => {
+      save.disabled = true;
+      try {
+        await api('saveUser', record);
+        notify('✦ Đã lưu người dùng');
+        await loadAdmin();
+      } catch (error) {
+        notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true);
+      } finally { save.disabled = false; }
+    });
+    row.append(save);
+    root.append(row);
+  });
+}
+
+function selectField(label, value, options, onChange) {
+  const wrapper = document.createElement('label');
+  wrapper.textContent = label;
+  const select = document.createElement('select');
+  options.forEach(optionValue => {
+    const option = document.createElement('option');
+    option.value = optionValue;
+    option.textContent = optionValue;
+    select.appendChild(option);
+  });
+  select.value = value;
+  select.addEventListener('change', () => onChange(select.value));
+  wrapper.appendChild(select);
+  return wrapper;
 }
 
 function render() {
@@ -113,6 +163,9 @@ function render() {
   renderRecords('package-list', state.data.packages || [], 'package');
   renderRecords('navigation-list', state.data.navigation || [], 'navigation');
   renderRecords('section-list', state.data.sections || [], 'section');
+  const isAdmin = state.data.session.role === 'admin';
+  $('users-tab').hidden = !isAdmin;
+  if (isAdmin) renderUsers(state.data.users || []);
 }
 
 async function loadAdmin() {
@@ -153,8 +206,13 @@ document.querySelectorAll('[data-tab]').forEach(button => {
   button.addEventListener('click', () => {
     const selected = button.dataset.tab;
     document.querySelectorAll('[data-tab]').forEach(tab => tab.classList.toggle('active', tab === button));
-    ['content','packages','navigation','sections'].forEach(name => { $(`${name}-panel`).hidden = selected !== name; });
+    ['content','packages','navigation','sections','users'].forEach(name => { $(`${name}-panel`).hidden = selected !== name; });
   });
+});
+
+$('add-user').addEventListener('click', () => {
+  if (state.data?.session?.role !== 'admin') return;
+  renderUsers([{ Username:'', Role:'editor', Status:'active', 'Display Name':'', Password:'' }, ...(state.data.users || [])]);
 });
 
 if (state.token) {

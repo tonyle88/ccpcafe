@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="gHeart" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9B6FD4"/>
+      <stop offset="100%" stop-color="#C87941"/>
+    </linearGradient>
+    <linearGradient id="gHeartLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C5B4F0"/>
+      <stop offset="100%" stop-color="#E8A96A"/>
+    </linearGradient>
+    <filter id="heartGlow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Speech bubble -->
+  <path d="M8 10 Q8 6 12 6 L52 6 Q56 6 56 10 L56 36 Q56 40 52 40 L36 40 L28 54 L26 40 L12 40 Q8 40 8 36 Z"
+        fill="url(#gHeart)" opacity="0.15"/>
+  <path d="M8 10 Q8 6 12 6 L52 6 Q56 6 56 10 L56 36 Q56 40 52 40 L36 40 L28 54 L26 40 L12 40 Q8 40 8 36 Z"
+        stroke="url(#gHeart)" stroke-width="1.8" stroke-linejoin="round"/>
+
+  <!-- Inner bubble surface -->
+  <path d="M10 11 Q10 8 13 8 L51 8 Q54 8 54 11 L54 35 Q54 38 51 38 L36 38 L28 51 L26.5 38 L13 38 Q10 38 10 35 Z"
+        fill="#FBF7FF" opacity="0.05"/>
+
+  <!-- Heart inside speech bubble -->
+  <path d="M32 30 C32 30 22 22 22 16.5 C22 13.5 24.5 11 27.5 11 C29.5 11 31.2 12 32 13.5 C32.8 12 34.5 11 36.5 11 C39.5 11 42 13.5 42 16.5 C42 22 32 30 32 30Z"
+        fill="url(#gHeart)" opacity="0.9" filter="url(#heartGlow)"/>
+
+  <!-- Heart inner highlight -->
+  <path d="M27 14 C25.5 14.5 24.5 16 24.5 17.5 C24.5 19 25 20.5 26 22"
+        stroke="url(#gHeartLight)" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Three dots in bubble (listening/typing dots) -->
+  <circle cx="24" cy="30" r="2" fill="url(#gHeartLight)" opacity="0.7"/>
+  <circle cx="32" cy="30" r="2" fill="url(#gHeartLight)" opacity="0.85"/>
+  <circle cx="40" cy="30" r="2" fill="url(#gHeartLight)" opacity="0.7"/>
+
+  <!-- Wait - let me redo. Put heart more clearly and dots below -->
+
+  <!-- Sparkles outside bubble -->
+  <g transform="translate(56,7)">
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#E8A96A" stroke-width="1.1"/>
+    <line x1="-4" y1="0" x2="4" y2="0" stroke="#E8A96A" stroke-width="1.1"/>
+    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#E8A96A" stroke-width="0.7"/>
+    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#E8A96A" stroke-width="0.7"/>
+  </g>
+
+  <g transform="translate(8,56)" opacity="0.6">
+    <line x1="0" y1="-3" x2="0" y2="3" stroke="#C5B4F0" stroke-width="0.9"/>
+    <line x1="-3" y1="0" x2="3" y2="0" stroke="#C5B4F0" stroke-width="0.9"/>
+  </g>
+</svg>

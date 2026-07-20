@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="gCup" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9B6FD4"/>
+      <stop offset="100%" stop-color="#C87941"/>
+    </linearGradient>
+    <linearGradient id="gCupLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C5B4F0"/>
+      <stop offset="100%" stop-color="#E8A96A"/>
+    </linearGradient>
+    <linearGradient id="gLiquid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7B5EA7" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#9B6FD4" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#C87941" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Steam wisps -->
+  <!-- Steam left -->
+  <path d="M23 14 Q21 10 23 6 Q25 2 23 -1" stroke="url(#gCupLight)" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Steam center -->
+  <path d="M32 12 Q30 7 32 3 Q34 -1 32 -4" stroke="url(#gCupLight)" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <!-- Steam right -->
+  <path d="M41 14 Q39 10 41 6 Q43 2 41 -1" stroke="url(#gCupLight)" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Saucer -->
+  <ellipse cx="32" cy="53" rx="20" ry="4.5" fill="url(#gCup)" opacity="0.6"/>
+  <ellipse cx="32" cy="53" rx="20" ry="4.5" stroke="url(#gCup)" stroke-width="1.2"/>
+  <ellipse cx="32" cy="53" rx="14" ry="2.8" stroke="url(#gCupLight)" stroke-width="0.6" opacity="0.5"/>
+
+  <!-- Cup body -->
+  <path d="M16 22 L19 50 Q19 53 23 53 L41 53 Q45 53 45 50 L48 22 Z"
+        fill="url(#gCup)" opacity="0.2"/>
+  <path d="M16 22 L19 50 Q19 53 23 53 L41 53 Q45 53 45 50 L48 22 Z"
+        stroke="url(#gCup)" stroke-width="1.8" stroke-linejoin="round"/>
+
+  <!-- Liquid inside cup -->
+  <path d="M17.5 28 L46.5 28 L44.5 50 Q44.5 52.5 42 52.5 L22 52.5 Q19.5 52.5 19.5 50 Z"
+        fill="url(#gLiquid)"/>
+  <!-- Liquid surface shine -->
+  <ellipse cx="32" cy="28" rx="14.5" ry="2" fill="url(#gCupLight)" opacity="0.25"/>
+
+  <!-- Cup top rim -->
+  <ellipse cx="32" cy="22" rx="16" ry="3" stroke="url(#gCup)" stroke-width="1.5"/>
+  <ellipse cx="32" cy="22" rx="16" ry="3" fill="url(#gCup)" opacity="0.4"/>
+
+  <!-- Handle -->
+  <path d="M48 28 Q58 28 58 37 Q58 46 48 46" stroke="url(#gCup)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M48 31 Q54 31 54 37 Q54 43 48 43" stroke="url(#gCupLight)" stroke-width="1" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Swirl design on cup -->
+  <path d="M24 36 Q28 32 32 36 Q36 40 40 36" stroke="url(#gCupLight)" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Star sparkle accent -->
+  <g transform="translate(9,18)">
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#E8A96A" stroke-width="1.1"/>
+    <line x1="-4" y1="0" x2="4" y2="0" stroke="#E8A96A" stroke-width="1.1"/>
+    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#E8A96A" stroke-width="0.7"/>
+    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#E8A96A" stroke-width="0.7"/>
+  </g>
+</svg>

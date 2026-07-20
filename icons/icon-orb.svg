@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="gOrb" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7B5EA7"/>
+      <stop offset="100%" stop-color="#C87941"/>
+    </linearGradient>
+    <linearGradient id="gOrbInner" x1="20%" y1="10%" x2="80%" y2="90%">
+      <stop offset="0%" stop-color="#C5B4F0"/>
+      <stop offset="50%" stop-color="#9B6FD4"/>
+      <stop offset="100%" stop-color="#E8A96A"/>
+    </linearGradient>
+    <radialGradient id="gOrbRadial" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FBF7FF" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#C5B4F0" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#7B5EA7" stop-opacity="1"/>
+    </radialGradient>
+    <filter id="glowOrb">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Outer magic circle ring -->
+  <circle cx="32" cy="36" r="22" stroke="url(#gOrb)" stroke-width="1" opacity="0.4"/>
+  <!-- Outer dashed ring -->
+  <circle cx="32" cy="36" r="25" stroke="url(#gOrb)" stroke-width="0.7" stroke-dasharray="3 4" opacity="0.3"/>
+
+  <!-- Stand/base -->
+  <ellipse cx="32" cy="57" rx="12" ry="3.5" fill="url(#gOrb)" opacity="0.6"/>
+  <rect x="29" y="54" width="6" height="4" rx="1.5" fill="url(#gOrb)" opacity="0.7"/>
+
+  <!-- Main orb -->
+  <circle cx="32" cy="33" r="21" fill="url(#gOrbRadial)" filter="url(#glowOrb)"/>
+
+  <!-- Orb shimmer -->
+  <ellipse cx="26" cy="25" rx="7" ry="5" fill="#FBF7FF" opacity="0.25" transform="rotate(-30 26 25)"/>
+  <ellipse cx="24" cy="23" rx="3.5" ry="2" fill="#FBF7FF" opacity="0.35" transform="rotate(-30 24 23)"/>
+
+  <!-- Inner magic circle pattern -->
+  <circle cx="32" cy="33" r="14" stroke="#E8A96A" stroke-width="0.6" opacity="0.4"/>
+  <circle cx="32" cy="33" r="9" stroke="#C5B4F0" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- Cross lines inside orb -->
+  <line x1="18" y1="33" x2="46" y2="33" stroke="#E8A96A" stroke-width="0.5" opacity="0.3"/>
+  <line x1="32" y1="19" x2="32" y2="47" stroke="#E8A96A" stroke-width="0.5" opacity="0.3"/>
+  <line x1="22" y1="23" x2="42" y2="43" stroke="#C5B4F0" stroke-width="0.4" opacity="0.25"/>
+  <line x1="42" y1="23" x2="22" y2="43" stroke="#C5B4F0" stroke-width="0.4" opacity="0.25"/>
+
+  <!-- Moon silhouette inside orb -->
+  <path d="M32 22 Q40 25 40 33 Q40 41 32 44 Q26 41 26 33 Q26 25 32 22Z" 
+        fill="#7B5EA7" opacity="0.25"/>
+
+  <!-- Crescent moon -->
+  <path d="M34 24 Q27 26 26 33 Q25 40 31 43 Q24 42 22 34 Q20 24 28 20 Q31 19 34 20Z" 
+        fill="#C5B4F0" opacity="0.5"/>
+
+  <!-- Star in orb -->
+  <polygon points="32,29 33.2,32 36.5,32 34,34 35.2,37 32,35 28.8,37 30,34 27.5,32 30.8,32"
+           fill="#E8A96A" opacity="0.85"/>
+
+  <!-- Sparkles around orb -->
+  <g transform="translate(9,11)">
+    <line x1="0" y1="-5" x2="0" y2="5" stroke="#E8A96A" stroke-width="1.2"/>
+    <line x1="-5" y1="0" x2="5" y2="0" stroke="#E8A96A" stroke-width="1.2"/>
+    <line x1="-3" y1="-3" x2="3" y2="3" stroke="#E8A96A" stroke-width="0.7"/>
+    <line x1="3" y1="-3" x2="-3" y2="3" stroke="#E8A96A" stroke-width="0.7"/>
+  </g>
+  <g transform="translate(55,14)" opacity="0.8">
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#C5B4F0" stroke-width="1"/>
+    <line x1="-4" y1="0" x2="4" y2="0" stroke="#C5B4F0" stroke-width="1"/>
+    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#C5B4F0" stroke-width="0.7"/>
+    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#C5B4F0" stroke-width="0.7"/>
+  </g>
+  <g transform="translate(56,50)" opacity="0.6">
+    <line x1="0" y1="-3" x2="0" y2="3" stroke="#E8A96A" stroke-width="0.9"/>
+    <line x1="-3" y1="0" x2="3" y2="0" stroke="#E8A96A" stroke-width="0.9"/>
+  </g>
+</svg>

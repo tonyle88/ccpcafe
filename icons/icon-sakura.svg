@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="gSakura" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9B6FD4"/>
+      <stop offset="100%" stop-color="#C87941"/>
+    </linearGradient>
+    <linearGradient id="gSakuraLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C5B4F0"/>
+      <stop offset="100%" stop-color="#E8A96A"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Petal 1 - top -->
+  <ellipse cx="32" cy="14" rx="7" ry="12" fill="url(#gSakura)" opacity="0.9" transform="rotate(0 32 32)"/>
+  <!-- Petal 2 - top right -->
+  <ellipse cx="32" cy="14" rx="7" ry="12" fill="url(#gSakura)" opacity="0.85" transform="rotate(72 32 32)"/>
+  <!-- Petal 3 - bottom right -->
+  <ellipse cx="32" cy="14" rx="7" ry="12" fill="url(#gSakura)" opacity="0.88" transform="rotate(144 32 32)"/>
+  <!-- Petal 4 - bottom left -->
+  <ellipse cx="32" cy="14" rx="7" ry="12" fill="url(#gSakura)" opacity="0.85" transform="rotate(216 32 32)"/>
+  <!-- Petal 5 - top left -->
+  <ellipse cx="32" cy="14" rx="7" ry="12" fill="url(#gSakura)" opacity="0.9" transform="rotate(288 32 32)"/>
+
+  <!-- Petal inner lines -->
+  <ellipse cx="32" cy="14" rx="3.5" ry="9" fill="none" stroke="url(#gSakuraLight)" stroke-width="0.6" opacity="0.5" transform="rotate(0 32 32)"/>
+  <ellipse cx="32" cy="14" rx="3.5" ry="9" fill="none" stroke="url(#gSakuraLight)" stroke-width="0.6" opacity="0.5" transform="rotate(72 32 32)"/>
+  <ellipse cx="32" cy="14" rx="3.5" ry="9" fill="none" stroke="url(#gSakuraLight)" stroke-width="0.6" opacity="0.5" transform="rotate(144 32 32)"/>
+  <ellipse cx="32" cy="14" rx="3.5" ry="9" fill="none" stroke="url(#gSakuraLight)" stroke-width="0.6" opacity="0.5" transform="rotate(216 32 32)"/>
+  <ellipse cx="32" cy="14" rx="3.5" ry="9" fill="none" stroke="url(#gSakuraLight)" stroke-width="0.6" opacity="0.5" transform="rotate(288 32 32)"/>
+
+  <!-- Center circle -->
+  <circle cx="32" cy="32" r="7" fill="url(#gSakuraLight)" filter="url(#glow)"/>
+  <circle cx="32" cy="32" r="4.5" fill="#E8A96A"/>
+  <circle cx="32" cy="32" r="2.5" fill="#FBF7FF"/>
+
+  <!-- Tiny stamens -->
+  <circle cx="32" cy="26.5" r="1" fill="#E8A96A"/>
+  <circle cx="36.3" cy="28.5" r="1" fill="#E8A96A"/>
+  <circle cx="34.8" cy="33.5" r="1" fill="#E8A96A"/>
+  <circle cx="29.2" cy="33.5" r="1" fill="#E8A96A"/>
+  <circle cx="27.7" cy="28.5" r="1" fill="#E8A96A"/>
+
+  <!-- Sparkle top right -->
+  <g transform="translate(50,10)" opacity="0.8">
+    <line x1="0" y1="-5" x2="0" y2="5" stroke="#E8A96A" stroke-width="1.2"/>
+    <line x1="-5" y1="0" x2="5" y2="0" stroke="#E8A96A" stroke-width="1.2"/>
+    <line x1="-3" y1="-3" x2="3" y2="3" stroke="#E8A96A" stroke-width="0.7"/>
+    <line x1="3" y1="-3" x2="-3" y2="3" stroke="#E8A96A" stroke-width="0.7"/>
+  </g>
+  <!-- Sparkle bottom left -->
+  <g transform="translate(12,52)" opacity="0.6">
+    <line x1="0" y1="-3.5" x2="0" y2="3.5" stroke="#C5B4F0" stroke-width="1"/>
+    <line x1="-3.5" y1="0" x2="3.5" y2="0" stroke="#C5B4F0" stroke-width="1"/>
+  </g>
+</svg>

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="gCal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9B6FD4"/>
+      <stop offset="100%" stop-color="#C87941"/>
+    </linearGradient>
+    <linearGradient id="gCalLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C5B4F0"/>
+      <stop offset="100%" stop-color="#E8A96A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Scroll / parchment body -->
+  <!-- Top curl -->
+  <ellipse cx="32" cy="12" rx="18" ry="5" fill="url(#gCal)" opacity="0.7"/>
+  <!-- Bottom curl -->
+  <ellipse cx="32" cy="52" rx="18" ry="5" fill="url(#gCal)" opacity="0.7"/>
+  <!-- Main scroll body -->
+  <rect x="14" y="12" width="36" height="40" rx="2" fill="url(#gCal)" opacity="0.15"/>
+  <rect x="14" y="12" width="36" height="40" rx="2" stroke="url(#gCal)" stroke-width="1.5"/>
+
+  <!-- Inner scroll surface -->
+  <rect x="16" y="14" width="32" height="36" rx="1.5" fill="#FBF7FF" opacity="0.08"/>
+
+  <!-- Date header band -->
+  <rect x="14" y="12" width="36" height="11" rx="2" fill="url(#gCal)" opacity="0.85"/>
+
+  <!-- Calendar lines (date grid) -->
+  <!-- Row 1 dots -->
+  <circle cx="22" cy="32" r="2.2" fill="url(#gCalLight)" opacity="0.8"/>
+  <circle cx="32" cy="32" r="2.2" fill="url(#gCalLight)" opacity="0.8"/>
+  <circle cx="42" cy="32" r="2.2" fill="url(#gCalLight)" opacity="0.8"/>
+  <!-- Row 2 dots -->
+  <circle cx="22" cy="40" r="2.2" fill="url(#gCalLight)" opacity="0.5"/>
+  <circle cx="32" cy="40" r="2.2" fill="url(#gCalLight)" opacity="0.5"/>
+  <circle cx="42" cy="40" r="2.2" fill="url(#gCalLight)" opacity="0.5"/>
+  <!-- Row 3 dots -->
+  <circle cx="22" cy="48" r="2.2" fill="url(#gCalLight)" opacity="0.3"/>
+  <circle cx="32" cy="48" r="2.2" fill="url(#gCalLight)" opacity="0.3"/>
+
+  <!-- Highlighted "selected" date -->
+  <circle cx="42" cy="32" r="5" fill="url(#gCal)" opacity="0.5"/>
+  <circle cx="42" cy="32" r="3" fill="#E8A96A" opacity="0.9"/>
+  <circle cx="42" cy="32" r="1.5" fill="#FBF7FF"/>
+
+  <!-- Header text lines -->
+  <line x1="20" y1="17.5" x2="44" y2="17.5" stroke="#FBF7FF" stroke-width="1.2" opacity="0.8"/>
+  <line x1="24" y1="20.5" x2="40" y2="20.5" stroke="#FBF7FF" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- Scroll rod lines at top/bottom -->
+  <line x1="14" y1="12" x2="50" y2="12" stroke="url(#gCal)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="14" y1="52" x2="50" y2="52" stroke="url(#gCal)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Sparkle top right -->
+  <g transform="translate(55,8)">
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#E8A96A" stroke-width="1.1"/>
+    <line x1="-4" y1="0" x2="4" y2="0" stroke="#E8A96A" stroke-width="1.1"/>
+    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#E8A96A" stroke-width="0.7"/>
+    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#E8A96A" stroke-width="0.7"/>
+  </g>
+</svg>

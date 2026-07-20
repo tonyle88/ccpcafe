@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="gStar" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9B6FD4"/>
+      <stop offset="100%" stop-color="#C87941"/>
+    </linearGradient>
+    <linearGradient id="gStarInner" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C5B4F0"/>
+      <stop offset="100%" stop-color="#E8A96A"/>
+    </linearGradient>
+    <filter id="glowStar">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Outer star glow ring -->
+  <circle cx="32" cy="32" r="26" stroke="url(#gStar)" stroke-width="0.5" opacity="0.3"/>
+  <circle cx="32" cy="32" r="22" stroke="url(#gStar)" stroke-width="0.5" opacity="0.2"/>
+
+  <!-- 8-pointed star (two overlapping squares rotated 45°) -->
+  <!-- Outer star shape -->
+  <polygon points="32,6 36.5,22 51,18 40,30 55,36 40,39 46,54 32,45 18,54 24,39 9,36 24,30 13,18 28,22" 
+           fill="url(#gStar)" opacity="0.15"/>
+
+  <!-- 6-pointed star primary -->
+  <polygon points="32,8 37,24 52,24 40,34 44,50 32,42 20,50 24,34 12,24 27,24" 
+           fill="url(#gStar)" opacity="0.25"/>
+
+  <!-- Main 6-point star clean -->
+  <polygon points="32,9 36.2,22.8 50,22.8 39.4,31.2 43.6,45 32,36.6 20.4,45 24.6,31.2 14,22.8 27.8,22.8"
+           fill="url(#gStar)" opacity="0.9" filter="url(#glowStar)"/>
+
+  <!-- Inner bright star -->
+  <polygon points="32,17 34.4,24.6 42,24.6 36,29.4 38.4,37 32,32.2 25.6,37 28,29.4 22,24.6 29.6,24.6"
+           fill="url(#gStarInner)" opacity="0.9"/>
+
+  <!-- Center dot -->
+  <circle cx="32" cy="32" r="4" fill="#FBF7FF" opacity="0.95"/>
+  <circle cx="32" cy="32" r="2" fill="#E8A96A"/>
+
+  <!-- Connecting lines (constellation style) -->
+  <line x1="32" y1="8" x2="32" y2="56" stroke="url(#gStar)" stroke-width="0.4" opacity="0.2"/>
+  <line x1="8" y1="32" x2="56" y2="32" stroke="url(#gStar)" stroke-width="0.4" opacity="0.2"/>
+  <line x1="13" y1="13" x2="51" y2="51" stroke="url(#gStar)" stroke-width="0.4" opacity="0.2"/>
+  <line x1="51" y1="13" x2="13" y2="51" stroke="url(#gStar)" stroke-width="0.4" opacity="0.2"/>
+
+  <!-- Corner sparkles -->
+  <g transform="translate(10,10)">
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#C5B4F0" stroke-width="1"/>
+    <line x1="-4" y1="0" x2="4" y2="0" stroke="#C5B4F0" stroke-width="1"/>
+  </g>
+  <g transform="translate(54,54)">
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#E8A96A" stroke-width="1"/>
+    <line x1="-4" y1="0" x2="4" y2="0" stroke="#E8A96A" stroke-width="1"/>
+  </g>
+  <g transform="translate(54,10)" opacity="0.7">
+    <line x1="0" y1="-3" x2="0" y2="3" stroke="#E8A96A" stroke-width="0.9"/>
+    <line x1="-3" y1="0" x2="3" y2="0" stroke="#E8A96A" stroke-width="0.9"/>
+  </g>
+</svg>

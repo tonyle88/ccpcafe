@@ -1,0 +1,9 @@
+Section Key,Order,Visible,Label
+hero,1,TRUE,Trang mở đầu
+about,2,TRUE,Về dịch vụ
+instructor,3,TRUE,Người hướng dẫn
+packages,4,TRUE,Gói dịch vụ
+process,5,TRUE,Quy trình
+feedback,6,TRUE,Cảm nhận khách hàng
+book,7,TRUE,Đặt lịch
+footer,8,TRUE,Chân trang

@@ -2,13 +2,13 @@ const CONTENT_SCHEMA = Object.freeze({
   'Content': ['Enabled','Key','Section','Description','Selector','Type','Attribute','Value','Updated At','Updated By'],
   'Service Packages': ['Enabled','Code','Name','Price','Duration','Unit','Icon','Featured','Tag','Features','Booking Note','Order','Updated At','Updated By'],
   'Navigation': ['Key','Label','Href','Enabled','Order','Type','Updated At','Updated By'],
-  'Section Order': ['Section Key','Order','Visible'],
+  'Section Order': ['Section Key','Order','Visible','Label'],
   'Custom Sections': ['Enabled','ID','Section Label','Title','Summary','HTML Content','Navigation Label','Order','Updated At','Updated By'],
   'Admin Users': ['Username','Password Hash','Role','Status','Display Name','Created At','Updated At','Last Login'],
   'Audit Log': ['Timestamp','Action','Status','Username','Role','Target Type','Target ID','Details','Message'],
   'Backup Log': ['Timestamp','Type','Status','Username','File ID','File Name','File URL','Details','Message']
 });
-const PUBLIC_CACHE_KEY = 'public-init-v2';
+const PUBLIC_CACHE_KEY = 'public-init-v3';
 
 function doGet(e) {
   const action = String((e && e.parameter && e.parameter.action) || 'health');
@@ -231,10 +231,18 @@ function validateManagedRow_(sheetName, data) {
   }
   if (sheetName === 'Navigation') {
     const href = String(data.Href || '').trim();
+    const label = String(data.Label || '').trim();
+    const type = String(data.Type || 'link').trim().toLowerCase();
+    if (label.length < 2 || label.length > 80) throw appError_('VALIDATION_ERROR', 'Tên menu phải dài từ 2 đến 80 ký tự.');
+    if (!['link','cta'].includes(type)) throw appError_('VALIDATION_ERROR', 'Kiểu menu chỉ hỗ trợ link hoặc CTA.');
     const isInternalPath = href.startsWith('/') && !href.startsWith('//');
     if (!href || (!href.startsWith('#') && !isInternalPath && !/^https:\/\//i.test(href))) {
       throw appError_('VALIDATION_ERROR', 'Liên kết phải là anchor, đường dẫn nội bộ hoặc HTTPS.');
     }
+  }
+  if (sheetName === 'Section Order') {
+    const label = String(data.Label || '').trim();
+    if (label.length < 2 || label.length > 100) throw appError_('VALIDATION_ERROR', 'Tên section phải dài từ 2 đến 100 ký tự.');
   }
   if (sheetName === 'Navigation' || sheetName === 'Section Order') {
     const order = Number(data.Order);
@@ -293,29 +301,60 @@ function seedContent_(spreadsheet) {
     ]);
   }
   const sections = spreadsheet.getSheetByName('Section Order');
-  if (sections.getLastRow() === 1) sections.getRange(2,1,8,3).setValues(['hero','about','instructor','packages','process','feedback','book','footer'].map((key,index) => [key,index+1,true]));
+  const sectionSeed = [
+    ['hero','Trang mở đầu'],['about','Về dịch vụ'],['instructor','Người hướng dẫn'],['packages','Gói dịch vụ'],
+    ['process','Quy trình'],['feedback','Cảm nhận khách hàng'],['book','Đặt lịch'],['footer','Chân trang']
+  ];
+  if (sections.getLastRow() === 1) {
+    sections.getRange(2,1,sectionSeed.length,4).setValues(sectionSeed.map((item,index) => [item[0],index+1,true,item[1]]));
+  } else {
+    const sectionLabelColumn = CONTENT_SCHEMA['Section Order'].indexOf('Label') + 1;
+    const sectionRows = rowsAsObjects_(sections);
+    sectionRows.forEach((row,index) => {
+      if (!String(row.Label || '').trim()) {
+        const match = sectionSeed.find(item => item[0] === String(row['Section Key']));
+        if (match) sections.getRange(index + 2,sectionLabelColumn).setValue(match[1]);
+      }
+    });
+  }
   const navigation = spreadsheet.getSheetByName('Navigation');
   if (navigation.getLastRow() === 1) {
     navigation.getRange(2,1,5,8).setValues([
-      ['about','Về chúng tôi','#about',true,1,'link',new Date(),'setup'],
+      ['about','Về dịch vụ','#about',true,1,'link',new Date(),'setup'],
       ['packages','Gói dịch vụ','#packages',true,2,'link',new Date(),'setup'],
       ['process','Quy trình','#process',true,3,'link',new Date(),'setup'],
       ['feedback','Cảm nhận','#feedback',true,4,'link',new Date(),'setup'],
       ['book','Đặt lịch ngay ✨','#book',true,5,'cta',new Date(),'setup']
     ]);
+  } else {
+    const navigationRows = rowsAsObjects_(navigation);
+    const labelColumn = CONTENT_SCHEMA.Navigation.indexOf('Label') + 1;
+    navigationRows.forEach((row,index) => {
+      if (String(row.Key) === 'about' && String(row.Label).trim() === 'Về chúng tôi') navigation.getRange(index + 2,labelColumn).setValue('Về dịch vụ');
+    });
   }
 }
 
 function ensureSheet_(spreadsheet, name, headers) {
   const sheet = spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
-  if (sheet.getLastRow() === 0) sheet.getRange(1,1,1,headers.length).setValues([headers]);
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1,1,1,headers.length).setValues([headers]);
+    return;
+  }
+  const existingHeaders = sheet.getRange(1,1,1,Math.max(sheet.getLastColumn(),1)).getValues()[0].map(String);
+  headers.forEach(header => {
+    if (existingHeaders.indexOf(header) < 0) {
+      existingHeaders.push(header);
+      sheet.getRange(1,existingHeaders.length).setValue(header);
+    }
+  });
 }
 function getContentSpreadsheet_() { const id=PropertiesService.getScriptProperties().getProperty('CONTENT_SPREADSHEET_ID'); if(id)return SpreadsheetApp.openById(id); const active=SpreadsheetApp.getActiveSpreadsheet(); if(!active)throw appError_('CONFIG_ERROR','Thiếu CONTENT_SPREADSHEET_ID trong Script Properties.'); return active; }
 function rowsAsObjects_(sheet) { if (!sheet || sheet.getLastRow() < 2) return []; const values=sheet.getDataRange().getValues(), headers=values.shift(); return values.map(row => headers.reduce((obj,key,index) => (obj[key]=row[index],obj),{})); }
 function contentPublic_(row) { return { key:String(row.Key), selector:String(row.Selector), type:String(row.Type || 'text'), attribute:String(row.Attribute || ''), value:String(row.Value || '') }; }
 function packagePublic_(row) { return { code:String(row.Code), name:String(row.Name), price:Number(row.Price), duration:Number(row.Duration), unit:String(row.Unit), icon:String(row.Icon), featured:truthy_(row.Featured), tag:String(row.Tag), features:String(row.Features).split('|').filter(Boolean), bookingNote:String(row['Booking Note'] || '') }; }
 function navigationPublic_(row) { return { key:String(row.Key), label:String(row.Label), href:String(row.Href), order:Number(row.Order), type:String(row.Type || '') }; }
-function sectionPublic_(row) { return { key:String(row['Section Key']), order:Number(row.Order) }; }
+function sectionPublic_(row) { return { key:String(row['Section Key']), label:String(row.Label || ''), order:Number(row.Order) }; }
 function truthy_(value) { return value === true || String(value).toLowerCase() === 'true' || String(value) === '1'; }
 function digestPassword_(password,salt) { return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + password, Utilities.Charset.UTF_8)); }
 function createPasswordHash_(password) { const salt=Utilities.getUuid().replace(/-/g,''); return salt+'$'+digestPassword_(password,salt); }

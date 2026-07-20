@@ -63,9 +63,28 @@ function field(label, value, onChange, type = 'text', readOnly = false) {
   return wrapper;
 }
 
+const sectionLabels = Object.freeze({
+  hero:'Trang mở đầu', about:'Về dịch vụ', instructor:'Người hướng dẫn', packages:'Gói dịch vụ',
+  process:'Quy trình', feedback:'Cảm nhận khách hàng', book:'Đặt lịch', footer:'Chân trang'
+});
+
 const recordViews = {
-  navigation: { idKey:'Key', action:'saveNavigation', fields:[['Label','text'],['Href','text'],['Order','number'],['Enabled','checkbox']] },
-  section: { idKey:'Section Key', action:'saveSection', fields:[['Order','number'],['Visible','checkbox']] }
+  navigation: {
+    idKey:'Key', titleKey:'Label', action:'saveNavigation', kicker:'Mục menu',
+    fields:[
+      { key:'Label', label:'Tên hiển thị trên trang chủ', type:'text' },
+      { key:'Href', label:'Liên kết', type:'text' },
+      { key:'Type', label:'Kiểu hiển thị', type:'select', options:['link','cta'] },
+      { key:'Order', label:'Thứ tự', type:'number' }
+    ], enabledKey:'Enabled', enabledLabel:'Hiển thị trên menu'
+  },
+  section: {
+    idKey:'Section Key', titleKey:'Label', action:'saveSection', kicker:'Section trang chủ',
+    fields:[
+      { key:'Label', label:'Tên hiển thị trên trang chủ', type:'text' },
+      { key:'Order', label:'Thứ tự', type:'number' }
+    ], enabledKey:'Visible', enabledLabel:'Hiển thị section'
+  }
 };
 
 function renderPackages(records) {
@@ -133,7 +152,7 @@ function renderContentRecords(records) {
   }, {});
   Object.entries(groups).forEach(([section, sectionRecords]) => {
     const group = document.createElement('section'); group.className = 'content-group';
-    const heading = document.createElement('h3'); heading.textContent = section; group.appendChild(heading);
+    const heading = document.createElement('h3'); heading.textContent = sectionLabels[section] || section; group.appendChild(heading);
     sectionRecords.forEach(original => group.appendChild(createContentEditor(original)));
     root.appendChild(group);
   });
@@ -184,12 +203,25 @@ function renderRecords(targetId, records, kind) {
   }
   records.forEach(original => {
     const record = { ...original };
-    const row = document.createElement('div');
-    row.className = 'record';
-    row.append(field(view.idKey, record[view.idKey], () => {}, 'text', true));
-    view.fields.forEach(([key, type]) => row.append(field(key, record[key], value => { record[key] = value; }, type)));
+    if (kind === 'section' && !record.Label) record.Label = sectionLabels[record[view.idKey]] || record[view.idKey];
+    const row = document.createElement('article'); row.className = 'managed-row';
+    const heading = document.createElement('header'); heading.className = 'managed-row-heading';
+    const handle = document.createElement('span'); handle.className = 'managed-handle'; handle.textContent = '⠿'; handle.setAttribute('aria-hidden','true');
+    const headingText = document.createElement('div');
+    const kicker = document.createElement('span'); kicker.className = 'editor-kicker'; kicker.textContent = view.kicker;
+    const title = document.createElement('h3'); title.textContent = record[view.titleKey] || record[view.idKey];
+    const code = document.createElement('code'); code.textContent = record[view.idKey];
+    headingText.append(kicker,title,code); heading.append(handle,headingText); row.append(heading);
+    const fields = document.createElement('div'); fields.className = 'managed-fields';
+    view.fields.forEach(config => {
+      const update = value => { record[config.key] = value; if (config.key === view.titleKey) title.textContent = value || record[view.idKey]; };
+      fields.append(config.type === 'select' ? selectField(config.label, record[config.key] || config.options[0], config.options, update) : field(config.label, record[config.key], update, config.type));
+    });
+    row.append(fields);
+    const actions = document.createElement('footer'); actions.className = 'editor-actions managed-actions';
+    actions.append(field(view.enabledLabel, record[view.enabledKey], value => { record[view.enabledKey] = value; }, 'checkbox'));
     const save = document.createElement('button');
-    save.textContent = 'Lưu thay đổi';
+    save.className = 'button button-primary'; save.textContent = '✦ Lưu thay đổi';
     save.addEventListener('click', async () => {
       save.disabled = true;
       try {
@@ -202,7 +234,7 @@ function renderRecords(targetId, records, kind) {
         save.disabled = false;
       }
     });
-    row.append(save);
+    actions.append(save); row.append(actions);
     root.append(row);
   });
 }

@@ -13,6 +13,7 @@ async function resolveContentApiUrl() {
     const response = await fetch('/api/config', { credentials:'same-origin', cache:'no-store' });
     if (!response.ok) return '';
     const runtimeConfig = await response.json();
+    runtimeBookingApiUrl = String(runtimeConfig.bookingApiUrl || runtimeBookingApiUrl).trim();
     return String(runtimeConfig.contentApiUrl || '').trim();
   } catch (_) { return ''; }
 }
@@ -593,24 +594,8 @@ if (bookingForm) {
       }
     }
 
-    const msgLines = [
-      `Xin chào! Mình muốn đặt lịch tư vấn Clow Card tại The Comma.`,
-      `Họ tên: ${name}`,
-      `SĐT: ${phone}`,
-      `Email: ${email}`,
-      `Gói: ${selectedPackage.name} – ${formatVnd(selectedPackage.price)}/${selectedPackage.duration} ${selectedPackage.unit || 'phút'}`,
-      preferredDate ? `Ngày mong muốn: ${preferredDate}` : '',
-      `Số người: ${partySize}`,
-      topic ? `Chủ đề: ${topic}` : '',
-    ].filter(Boolean).join('\n');
-
-    const encodedMsg = encodeURIComponent(msgLines);
-    window.open(`${appConfig.messengerUrl || 'https://www.facebook.com/messages/t/'}?text=${encodedMsg}`, '_blank', 'noopener');
-
-    const btn = bookingForm.querySelector('.form-submit-btn span');
-    if (btn) btn.textContent = '✦ Đã gửi! Chúng mình sẽ liên hệ sớm nhé 🎉';
-    bookingForm.classList.add('submitted');
-    bookingStatus.textContent = 'Đã mở Messenger để bạn xác nhận đăng ký.';
+    bookingStatus.textContent = 'Hệ thống đặt lịch chưa được cấu hình. Vui lòng thử lại sau hoặc liên hệ quản trị viên.';
+    submitButton.disabled = false;
   });
 }
 

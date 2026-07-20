@@ -18,7 +18,7 @@ assert(contentBackend.includes("!/^https:\\/\\//i.test(href)"),'Navigation phả
 assert(contentBackend.includes("requireSession_(body.token, ['admin'])"),'API user phải chỉ cho admin');
 ['Bạn không thể tự hạ quyền','Phải giữ ít nhất một admin'].forEach(message=>assert(contentBackend.includes(message),`User guard thiếu: ${message}`));
 ['contentPublic_','navigationPublic_','sectionPublic_'].forEach(mapper=>assert(contentBackend.includes(`.map(${mapper})`),`Public API thiếu allowlist mapper ${mapper}`));
-assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v2'"),'Public cache key phải tăng khi contract đổi');
+assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v3'"),'Public cache key phải tăng khi contract đổi');
 assert(contentBackend.includes('missingContent')&&contentBackend.includes('existingContentKeys'),'Content seed phải migration idempotent cho Sheet hiện có');
 ['bookingRemoteHealth_','operationsSummary_','UrlFetchApp.fetch'].forEach(term=>assert(contentBackend.includes(term),`Admin dashboard backend thiếu ${term}`));
 assert(contentBackend.includes('script\\.google\\.com|script\\.googleusercontent\\.com'),'Booking health endpoint phải giới hạn Google Apps Script');
@@ -27,10 +27,14 @@ const adminScript=read('admin/app.js');assert(adminScript.includes("await api('s
 ['renderContentRecords','createContentEditor','Preview an toàn'].forEach(term=>assert(adminScript.includes(term),`Content editor thiếu ${term}`));
 ['renderPackages','createPackageEditor',"await api('savePackage', record)"].forEach(term=>assert(adminScript.includes(term),`Package editor thiếu ${term}`));
 ['editor-heading','package-fields','package-details','editor-actions','content-editor-body'].forEach(term=>assert(adminScript.includes(term),`Admin editor thiếu cấu trúc ${term}`));
+['Tên hiển thị trên trang chủ','sectionLabels','managed-row'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
 const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));
 assert(landingScript.includes("fetch('/api/config'"),'Landing phải lấy CONTENT_API_URL runtime từ Vercel /api/config');
+assert(!landingScript.includes('window.open(`${appConfig.messengerUrl'),'Form booking không được fallback sang Facebook/Messenger');
+assert(read('api/config.js').includes('bookingApiUrl'),'Runtime config phải cấp Booking API trực tiếp');
 assert(read('migration-kit/content.csv').split('\n').length>=27,'Migration content phải chứa đầy đủ key landing chính');
+assert(read('migration-kit/section-order.csv').includes('Section Key,Order,Visible,Label'),'Migration section phải có tên tiếng Việt');
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));
 const thankyouScript=read('thankyou.js');assert(thankyouScript.includes("url.searchParams.set('action', 'checkPayment')"),'Thank-you phải xác minh trạng thái từ backend');assert(!thankyouScript.includes("params.get('status')"),'Thank-you không được tin status từ URL');
 JSON.parse(read('vercel.json'));JSON.parse(read('package.json'));JSON.parse(read('apps-script/content-admin/appsscript.json'));JSON.parse(read('apps-script/booking-payment/appsscript.json'));

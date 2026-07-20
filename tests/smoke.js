@@ -52,6 +52,7 @@ assert(read('migration-kit/section-order.csv').includes('Section Key,Order,Visib
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));
 ['loadPaymentContentConfig','createQrUrl','config.payment'].forEach(term=>assert(paymentScript.includes(term)||contentBackend.includes(term),`Payment config public thiếu ${term}`));
 assert(paymentScript.includes("return `/api/vietqr?${params}`"),'Trình duyệt phải tải QR cùng domain để không bị CSP chặn');
+assert(paymentScript.includes('createDirectQrUrl')&&paymentScript.includes('dataset.fallback'),'Payment phải thử ảnh VietQR trực tiếp nếu proxy lỗi');
 assert(paymentScript.includes("amount:String(order.amount)")&&!paymentScript.includes("searchParams.get('amount')"),'QR phải dùng amount từ Booking API, không lấy từ URL');
 ['payment-qr','payment-mode','copy-transfer'].forEach(id=>assert(read('payment.html').includes(`id="${id}"`),`Payment UI thiếu ${id}`));
 ['PAYMENT_BANK_CODE','paymentQrUrl_','Payment Transaction ID'].forEach(term=>assert(bookingBackend.includes(term),`Payment backend thiếu ${term}`));

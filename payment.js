@@ -42,6 +42,12 @@ function createQrUrl(payment,order) {
   return `/api/vietqr?${params}`;
 }
 
+function createDirectQrUrl(payment,order) {
+  const legacyBankCode=String(order.payment?.qrUrl||'').match(/img\.vietqr\.io\/image\/([A-Za-z0-9]+)-/)?.[1]||'',bankCode=payment.bankCode||legacyBankCode,accountNo=String(payment.accountNo||'').replace(/\s/g,'');
+  if(!bankCode||!accountNo)return '';
+  return `https://img.vietqr.io/image/${encodeURIComponent(bankCode)}-${encodeURIComponent(accountNo)}-compact2.png?amount=${encodeURIComponent(order.amount)}&addInfo=${encodeURIComponent(order.transferContent)}&accountName=${encodeURIComponent(payment.accountName||'')}`;
+}
+
 function formatVnd(value) { return new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND' }).format(value); }
 function stopPolling() { clearTimeout(pollTimer); pollTimer = undefined; }
 function schedulePoll() {
@@ -77,6 +83,7 @@ function render(order) {
   const configured=paymentContentConfig&&paymentContentConfig.bankCode?paymentContentConfig:{};
   order.payment={...(order.payment||{}),...configured};
   order.payment.qrUrl=createQrUrl(order.payment,order);
+  const directQrUrl=createDirectQrUrl(order.payment,order);
   elements.loading.hidden = true;
   elements.details.hidden = false;
   elements.error.textContent = '';
@@ -98,7 +105,8 @@ function render(order) {
   elements.qr.style.display = qrUrl ? 'block' : 'none';
   elements.qrUnavailable.hidden = Boolean(qrUrl);
   elements.qrUnavailable.style.display = qrUrl ? 'none' : 'block';
-  if (qrUrl && elements.qr.src !== qrUrl) elements.qr.src = qrUrl;
+  elements.qr.dataset.fallback = directQrUrl;
+  if (qrUrl && elements.qr.src !== new URL(qrUrl,location.href).href) elements.qr.src = qrUrl;
   const reviewing = order.status === 'PAYMENT_REVIEW';
   elements.confirm.disabled = reviewing || STOP_STATUSES.has(order.status);
   if (reviewing) elements.confirm.textContent = 'Đang chờ đối soát';
@@ -154,6 +162,8 @@ elements.copy.addEventListener('click', async () => {
 });
 
 elements.qr.addEventListener('error', () => {
+  const fallback=elements.qr.dataset.fallback;
+  if(fallback&&elements.qr.src!==fallback){delete elements.qr.dataset.fallback;elements.qr.src=fallback;elements.qr.style.display='block';return;}
   elements.qr.hidden = true;
   elements.qr.style.display = 'none';
   elements.qrUnavailable.hidden = false;

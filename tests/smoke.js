@@ -45,5 +45,8 @@ const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilityc
 const sepayProxy=read('api/sepay-webhook.js');['SEPAY_API_KEY','PAYMENT_WEBHOOK_SECRET','timingSafeEqual','Apikey'].forEach(term=>assert(sepayProxy.includes(term),`SePay proxy thiếu ${term}`));
 assert(read('vercel.json').includes('https://img.vietqr.io'),'CSP payment phải cho phép ảnh QR VietQR');
 const thankyouScript=read('thankyou.js');assert(thankyouScript.includes("url.searchParams.set('action', 'checkPayment')"),'Thank-you phải xác minh trạng thái từ backend');assert(!thankyouScript.includes("params.get('status')"),'Thank-you không được tin status từ URL');
+['thankyou-package','thankyou-amount','next-heading'].forEach(id=>assert(read('thankyou.html').includes(`id="${id}"`),`Thank-you chuyên nghiệp thiếu ${id}`));
+['booking-success-modal','booking-success-payment','booking-success-countdown'].forEach(id=>assert(html.includes(`id="${id}"`),`Popup đăng ký thiếu ${id}`));
+['bookingCustomerEmailHtml_','PUBLIC_SITE_URL','htmlBody'].forEach(term=>assert(bookingBackend.includes(term),`Email booking HTML thiếu ${term}`));
 JSON.parse(read('vercel.json'));JSON.parse(read('package.json'));JSON.parse(read('apps-script/content-admin/appsscript.json'));JSON.parse(read('apps-script/booking-payment/appsscript.json'));
 console.log(`Smoke checks passed: ${packages.length} packages, configs and deployment artifacts valid.`);

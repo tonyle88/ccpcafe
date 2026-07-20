@@ -27,7 +27,7 @@
 5. Chọn một trong hai chế độ:
    - Không dùng SePay: đặt `PAYMENT_MODE=manual`; không cần webhook secret. Khách quét VietQR rồi bấm yêu cầu đối soát thủ công.
    - Có SePay: đặt `PAYMENT_MODE=sepay` và tạo `PAYMENT_WEBHOOK_SECRET` ngẫu nhiên, dài tối thiểu 32 byte. Secret này phải trùng giá trị trong Vercel, không gửi cho SePay và không đưa vào Git.
-6. `OWNER_EMAIL` có thể để trống; hệ thống mặc định dùng email của tài khoản deploy.
+6. `OWNER_EMAIL` có thể để trống; hệ thống mặc định dùng email của tài khoản deploy. Đặt thêm `PUBLIC_SITE_URL=https://<domain>` để email xác nhận có nút quay lại trang thanh toán; không có dấu `/` cuối.
 7. Deploy Web App và kiểm tra `?action=health`. Chạy lại `setupBookingSpreadsheet()` khi nâng cấp để append cột `Payment Mode` mà không xóa dữ liệu cũ.
 8. Tạo booking synthetic và xác nhận đủ cột, số tiền, email/log.
 

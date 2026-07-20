@@ -520,6 +520,20 @@
     </div>
   </section>
 
+  <div id="booking-success-modal" class="booking-success-modal" hidden>
+    <div class="booking-success-backdrop" data-close-booking-success></div>
+    <section class="booking-success-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-success-title">
+      <div class="booking-success-mark" aria-hidden="true">✦</div>
+      <p class="booking-success-eyebrow">Đăng ký thành công</p>
+      <h2 id="booking-success-title">Cảm ơn bạn đã tin tưởng Clow!</h2>
+      <p>Thông tin đăng ký đã được ghi nhận. Email xác nhận đang được gửi tới <strong id="booking-success-email"></strong>.</p>
+      <div class="booking-success-order"><span>Mã đơn hàng</span><strong id="booking-success-order"></strong></div>
+      <p class="booking-success-note">Tiếp theo, vui lòng hoàn tất chuyển khoản bằng mã QR để chúng mình giữ lịch cho bạn.</p>
+      <a id="booking-success-payment" class="booking-success-button" href="payment.html">Tiếp tục thanh toán <span aria-hidden="true">→</span></a>
+      <p id="booking-success-countdown" class="booking-success-countdown"></p>
+    </section>
+  </div>
+
   <!-- ===== FOOTER ===== -->
   <footer id="footer">
     <div class="container footer-inner">

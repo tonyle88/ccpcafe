@@ -1,1 +1,45 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Cảm ơn bạn | Clow Cat Patronus</title><link rel="icon" href="hinh/favicon.png"><link rel="stylesheet" href="payment.css"></head><body><main class="payment-shell"><section class="payment-card"><p class="eyebrow">✦ Clow Cat Patronus</p><h1>Cảm ơn bạn!</h1><p id="thankyou-message">Đang xác minh đăng ký của bạn…</p><dl><div><dt>Mã đơn</dt><dd id="thankyou-order"></dd></div><div><dt>Trạng thái</dt><dd id="thankyou-status"></dd></div></dl><a class="brand" href="index.html">← Về trang chủ</a></section></main><script src="config.js"></script><script src="thankyou.js"></script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><meta name="description" content="Xác nhận đăng ký Clow Cat Patronus">
+  <title>Cảm ơn bạn | Clow Cat Patronus</title>
+  <link rel="icon" href="hinh/favicon.png"><link rel="stylesheet" href="thankyou.css">
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div><div class="orb orb-one" aria-hidden="true"></div><div class="orb orb-two" aria-hidden="true"></div>
+  <main class="thankyou-shell">
+    <a class="logo" href="index.html" aria-label="Về trang chủ"><img src="hinh/logo.png" alt="Clow Cat Patronus" width="82" height="82"></a>
+    <section class="thankyou-hero" aria-labelledby="thankyou-title">
+      <p id="thankyou-badge" class="status-badge"><span></span> Đang xác minh</p>
+      <div class="sparkle" aria-hidden="true">✨</div>
+      <h1 id="thankyou-title">Cảm ơn bạn đã<br><em>tin tưởng Clow!</em></h1>
+      <p id="thankyou-message" class="hero-copy">Đang xác minh đăng ký và trạng thái thanh toán của bạn…</p>
+    </section>
+
+    <section class="info-card" aria-labelledby="order-heading">
+      <h2 id="order-heading"><span>✦</span> Thông tin đơn hàng <span>✦</span></h2>
+      <dl>
+        <div><dt>Mã đơn hàng</dt><dd id="thankyou-order" class="order-code">—</dd></div>
+        <div id="customer-row" style="display:none"><dt>Khách hàng</dt><dd id="thankyou-name">—</dd></div>
+        <div><dt>Gói dịch vụ</dt><dd id="thankyou-package">—</dd></div>
+        <div><dt>Tổng thanh toán</dt><dd id="thankyou-amount">—</dd></div>
+        <div><dt>Trạng thái</dt><dd id="thankyou-status">Đang xác minh…</dd></div>
+      </dl>
+    </section>
+
+    <section class="next-card" aria-labelledby="next-heading">
+      <h2 id="next-heading">✦ Bước tiếp theo của bạn ✦</h2>
+      <ol>
+        <li><span>1</span><p><strong>Kiểm tra email xác nhận</strong>Email chứa mã đơn và thông tin đăng ký đã được gửi tới địa chỉ bạn cung cấp.</p></li>
+        <li><span>2</span><p><strong>Chờ chúng mình liên hệ</strong>Clow Cat Patronus sẽ kiểm tra thông tin và liên hệ để thống nhất khung giờ phù hợp.</p></li>
+        <li><span>3</span><p><strong>Nhận xác nhận lịch hẹn</strong>Lịch chỉ hoàn tất khi bạn nhận được phản hồi xác nhận chính thức từ chúng mình.</p></li>
+      </ol>
+    </section>
+
+    <div class="actions"><a class="primary-action" href="index.html">← Về trang chủ</a><a id="back-payment" class="secondary-action" href="payment.html" style="display:none">Quay lại thanh toán</a></div>
+    <p class="support-note">Cần hỗ trợ? Vui lòng dùng thông tin liên hệ tại trang chủ và cung cấp mã đơn hàng.</p>
+  </main>
+  <script src="config.js"></script><script src="thankyou.js"></script>
+</body>
+</html>

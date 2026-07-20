@@ -535,6 +535,27 @@ const pkgSelect = document.getElementById('f-pkg');
 const astroNote = document.getElementById('astro-note');
 const bookingStatus = document.getElementById('booking-status');
 const bookingFieldIds = ['f-name','f-phone','f-email','f-pkg','f-date'];
+const bookingSuccessModal = document.getElementById('booking-success-modal');
+let bookingRedirectTimer;
+
+function showBookingSuccess({ orderId, email, name, packageName, amount, paymentUrl }) {
+  const target = paymentUrl || `payment.html?${new URLSearchParams({ orderId })}`;
+  sessionStorage.setItem('cafeCcpBookingSummary', JSON.stringify({ orderId, name, packageName, amount, email }));
+  document.getElementById('booking-success-email').textContent = email;
+  document.getElementById('booking-success-order').textContent = orderId;
+  document.getElementById('booking-success-payment').href = target;
+  bookingSuccessModal.hidden = false;
+  document.body.classList.add('modal-open');
+  document.getElementById('booking-success-payment').focus();
+  let seconds = 8;
+  const countdown = document.getElementById('booking-success-countdown');
+  const tick = () => {
+    countdown.textContent = `Tự động chuyển sang trang thanh toán sau ${seconds} giây.`;
+    if (seconds-- <= 0) window.location.assign(target);
+    else bookingRedirectTimer = setTimeout(tick, 1000);
+  };
+  tick();
+}
 
 function todayLocalIso() {
   const now = new Date();
@@ -635,7 +656,10 @@ if (bookingForm) {
         const payload = await response.json();
         if (!payload.ok || !payload.data?.orderId) throw new Error(payload.error?.message || 'Chưa thể ghi nhận đăng ký.');
         sessionStorage.removeItem('cafeCcpBookingAttempt');
-        window.location.assign(`payment.html?${new URLSearchParams({ orderId: payload.data.orderId })}`);
+        showBookingSuccess({
+          orderId:payload.data.orderId, email, name, packageName:selectedPackage.name,
+          amount:payload.data.amount, paymentUrl:payload.data.paymentUrl
+        });
         return;
       } catch (error) {
         bookingStatus.textContent = error.message || 'Chưa thể ghi nhận đăng ký. Vui lòng thử lại.';

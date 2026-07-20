@@ -7,6 +7,16 @@ const fallbackData = window.CAFE_CCP_FALLBACK || { packages: [] };
 let publicData = fallbackData;
 let runtimeBookingApiUrl = appConfig.bookingApiUrl || '';
 
+async function resolveContentApiUrl() {
+  if (appConfig.contentApiUrl) return appConfig.contentApiUrl;
+  try {
+    const response = await fetch('/api/config', { credentials:'same-origin', cache:'no-store' });
+    if (!response.ok) return '';
+    const runtimeConfig = await response.json();
+    return String(runtimeConfig.contentApiUrl || '').trim();
+  } catch (_) { return ''; }
+}
+
 function formatVnd(amount) {
   return new Intl.NumberFormat('vi-VN').format(Number(amount || 0)) + 'đ';
 }
@@ -140,14 +150,15 @@ function populatePackageSelect() {
 }
 
 async function loadPublicData() {
-  if (!appConfig.contentApiUrl) {
+  const contentApiUrl = await resolveContentApiUrl();
+  if (!contentApiUrl) {
     renderPublicData();
     return;
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), appConfig.requestTimeoutMs || 15000);
   try {
-    const url = new URL(appConfig.contentApiUrl);
+    const url = new URL(contentApiUrl);
     url.searchParams.set('action', 'publicInit');
     const response = await fetch(url, { signal: controller.signal, credentials: 'omit' });
     const payload = await response.json();

@@ -252,13 +252,37 @@ function health_() {
 
 function seedContent_(spreadsheet) {
   const content = spreadsheet.getSheetByName('Content');
-  if (content.getLastRow() === 1) {
-    content.getRange(2,1,3,10).setValues([
-      [true,'hero.subtitle','hero','Dòng kêu gọi ngắn','.hero-sub','text','','Book đi chờ chi!!!',new Date(),'setup'],
-      [true,'about.title','about','Tiêu đề giới thiệu','.section-about .section-title','text','','Bài Clow – Gương soi tâm hồn',new Date(),'setup'],
-      [true,'packages.title','packages','Tiêu đề gói dịch vụ','.section-packages .section-title','text','','Chọn hành trình của bạn',new Date(),'setup']
-    ]);
-  }
+  const contentSeed = [
+      ['hero.badge','hero','Nhãn thương hiệu','[data-content-key="hero.badge"]','text','','✦ The Comma × Clow Cat Patronus ✦'],
+      ['hero.subtitle','hero','Dòng kêu gọi ngắn','[data-content-key="hero.subtitle"]','text','','Book đi chờ chi!!!'],
+      ['hero.primaryCta','hero','Nút đặt lịch','[data-content-key="hero.primaryCta"]','text','','✦ Đặt lịch ngay'],
+      ['hero.secondaryCta','hero','Nút xem gói','[data-content-key="hero.secondaryCta"]','text','','Xem gói dịch vụ'],
+      ['hero.giftTitle','hero','Tiêu đề quà tặng','[data-content-key="hero.giftTitle"]','text','','Tặng ngay 1 ly nước'],
+      ['hero.giftSubtitle','hero','Mô tả quà tặng','[data-content-key="hero.giftSubtitle"]','text','','Bất kì khi đặt lịch'],
+      ['about.tag','about','Nhãn section','[data-content-key="about.tag"]','text','','✦ Về dịch vụ'],
+      ['about.title','about','Tiêu đề giới thiệu','[data-content-key="about.title"]','text','','Bài Clow – Gương soi tâm hồn'],
+      ['about.audienceLabel','about','Nhãn nhóm khách hàng','[data-content-key="about.audienceLabel"]','text','','Dịch vụ dành cho'],
+      ['instructor.name','instructor','Tên người hướng dẫn','[data-content-key="instructor.name"]','text','','a.k.a Phan Thái Bảo'],
+      ['instructor.tag','instructor','Nhãn người hướng dẫn','[data-content-key="instructor.tag"]','text','','✦ NGƯỜI HƯỚNG DẪN'],
+      ['instructor.title','instructor','Tiêu đề người hướng dẫn','[data-content-key="instructor.title"]','text','','Clow Cat Patronus'],
+      ['instructor.quote','instructor','Giới thiệu người hướng dẫn','[data-content-key="instructor.quote"]','text','','Người đồng hành cùng hàng ngàn tâm hồn trên hành trình khám phá bản thân qua ngôn ngữ của những lá bài Clow huyền bí.'],
+      ['packages.tag','packages','Nhãn gói dịch vụ','[data-content-key="packages.tag"]','text','','✦ Gói dịch vụ'],
+      ['packages.title','packages','Tiêu đề gói dịch vụ','[data-content-key="packages.title"]','text','','Chọn hành trình của bạn'],
+      ['process.tag','process','Nhãn quy trình','[data-content-key="process.tag"]','text','','✦ Quy trình'],
+      ['process.title','process','Tiêu đề quy trình','[data-content-key="process.title"]','text','','Chỉ 3 bước đơn giản'],
+      ['process.step1Title','process','Tên bước 1','[data-content-key="process.step1Title"]','text','','Đặt lịch'],
+      ['process.step1Description','process','Mô tả bước 1','[data-content-key="process.step1Description"]','text','','Chọn gói phù hợp và đặt lịch hẹn qua link bên dưới. Siêu nhanh, siêu dễ.'],
+      ['process.step2Title','process','Tên bước 2','[data-content-key="process.step2Title"]','text','','Ghé The Comma'],
+      ['process.step2Description','process','Mô tả bước 2','[data-content-key="process.step2Description"]','text','','Đến đúng giờ, chọn ly nước miễn phí và thoải mái trong không gian ấm cúng.'],
+      ['process.step3Title','process','Tên bước 3','[data-content-key="process.step3Title"]','text','','Trải bài & tâm sự'],
+      ['process.step3Description','process','Mô tả bước 3','[data-content-key="process.step3Description"]','text','','Chia sẻ những gì bạn đang trăn trở. Từng tấm bài Clow sẽ dẫn lối cho bạn.'],
+      ['booking.tag','book','Nhãn đặt lịch','[data-content-key="booking.tag"]','text','','✦ Sẵn sàng bắt đầu?'],
+      ['booking.formTitle','book','Tiêu đề form','[data-content-key="booking.formTitle"]','text','','Đăng Ký Đặt Lịch'],
+      ['booking.footnote','book','Ghi chú phản hồi','[data-content-key="booking.footnote"]','text','','Chúng tôi sẽ liên hệ xác nhận lịch trong vòng 24 giờ.']
+  ];
+  const existingContentKeys = new Set(rowsAsObjects_(content).map(row => String(row.Key)));
+  const missingContent = contentSeed.filter(row => !existingContentKeys.has(row[0])).map(row => [true].concat(row,[new Date(),'setup']));
+  if (missingContent.length) content.getRange(content.getLastRow()+1,1,missingContent.length,10).setValues(missingContent);
   const packages = spreadsheet.getSheetByName('Service Packages');
   if (packages.getLastRow() === 1) {
     packages.getRange(2,1,4,14).setValues([

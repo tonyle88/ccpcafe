@@ -35,8 +35,10 @@
 3. Trong Content/Admin Script Properties, đặt `BOOKING_WEB_APP_URL` để public content response cung cấp Booking API URL cho landing.
 4. Đặt `environment: 'staging'`, cập nhật `releaseId` và giữ `paymentEnabled: false` tới khi đối soát xong.
 5. Redeploy sau khi thêm/chỉnh Environment Variable; kiểm tra `/api/config` trả `contentApiUrl` khác rỗng.
-6. Kiểm tra CSP console, asset 404 và CORS.
-7. Test landing → booking → payment → manual confirm trên mobile và desktop.
+6. Với Spreadsheet đã setup từ release cũ, chạy lại `setupContentSpreadsheet()` để append các content key còn thiếu; hàm giữ nguyên key đã có.
+7. Kiểm tra landing thực sự gọi `publicInit`, sau đó sửa thử một content key trên Sheet/Admin và xác nhận landing đổi sau khi cache được xóa.
+8. Kiểm tra CSP console, asset 404 và CORS.
+9. Test landing → booking → payment → manual confirm trên mobile và desktop.
 
 ## 5. Production
 

@@ -1,4 +1,27 @@
 Enabled,Key,Section,Description,Selector,Type,Attribute,Value
-TRUE,hero.subtitle,hero,Dòng kêu gọi ngắn,.hero-sub,text,,Book đi chờ chi!!!
-TRUE,about.title,about,Tiêu đề giới thiệu,.section-about .section-title,text,,Bài Clow – Gương soi tâm hồn
-TRUE,packages.title,packages,Tiêu đề gói dịch vụ,.section-packages .section-title,text,,Chọn hành trình của bạn
+TRUE,hero.badge,hero,Nhãn thương hiệu,"[data-content-key=""hero.badge""]",text,,✦ The Comma × Clow Cat Patronus ✦
+TRUE,hero.subtitle,hero,Dòng kêu gọi ngắn,"[data-content-key=""hero.subtitle""]",text,,Book đi chờ chi!!!
+TRUE,hero.primaryCta,hero,Nút đặt lịch,"[data-content-key=""hero.primaryCta""]",text,,✦ Đặt lịch ngay
+TRUE,hero.secondaryCta,hero,Nút xem gói,"[data-content-key=""hero.secondaryCta""]",text,,Xem gói dịch vụ
+TRUE,hero.giftTitle,hero,Tiêu đề quà tặng,"[data-content-key=""hero.giftTitle""]",text,,Tặng ngay 1 ly nước
+TRUE,hero.giftSubtitle,hero,Mô tả quà tặng,"[data-content-key=""hero.giftSubtitle""]",text,,Bất kì khi đặt lịch
+TRUE,about.tag,about,Nhãn section,"[data-content-key=""about.tag""]",text,,✦ Về dịch vụ
+TRUE,about.title,about,Tiêu đề giới thiệu,"[data-content-key=""about.title""]",text,,Bài Clow – Gương soi tâm hồn
+TRUE,about.audienceLabel,about,Nhãn nhóm khách hàng,"[data-content-key=""about.audienceLabel""]",text,,Dịch vụ dành cho
+TRUE,instructor.name,instructor,Tên người hướng dẫn,"[data-content-key=""instructor.name""]",text,,a.k.a Phan Thái Bảo
+TRUE,instructor.tag,instructor,Nhãn người hướng dẫn,"[data-content-key=""instructor.tag""]",text,,✦ NGƯỜI HƯỚNG DẪN
+TRUE,instructor.title,instructor,Tiêu đề người hướng dẫn,"[data-content-key=""instructor.title""]",text,,Clow Cat Patronus
+TRUE,instructor.quote,instructor,Giới thiệu người hướng dẫn,"[data-content-key=""instructor.quote""]",text,,Người đồng hành cùng hàng ngàn tâm hồn trên hành trình khám phá bản thân qua ngôn ngữ của những lá bài Clow huyền bí.
+TRUE,packages.tag,packages,Nhãn gói dịch vụ,"[data-content-key=""packages.tag""]",text,,✦ Gói dịch vụ
+TRUE,packages.title,packages,Tiêu đề gói dịch vụ,"[data-content-key=""packages.title""]",text,,Chọn hành trình của bạn
+TRUE,process.tag,process,Nhãn quy trình,"[data-content-key=""process.tag""]",text,,✦ Quy trình
+TRUE,process.title,process,Tiêu đề quy trình,"[data-content-key=""process.title""]",text,,Chỉ 3 bước đơn giản
+TRUE,process.step1Title,process,Tên bước 1,"[data-content-key=""process.step1Title""]",text,,Đặt lịch
+TRUE,process.step1Description,process,Mô tả bước 1,"[data-content-key=""process.step1Description""]",text,,"Chọn gói phù hợp và đặt lịch hẹn qua link bên dưới. Siêu nhanh, siêu dễ."
+TRUE,process.step2Title,process,Tên bước 2,"[data-content-key=""process.step2Title""]",text,,Ghé The Comma
+TRUE,process.step2Description,process,Mô tả bước 2,"[data-content-key=""process.step2Description""]",text,,"Đến đúng giờ, chọn ly nước miễn phí và thoải mái trong không gian ấm cúng."
+TRUE,process.step3Title,process,Tên bước 3,"[data-content-key=""process.step3Title""]",text,,Trải bài & tâm sự
+TRUE,process.step3Description,process,Mô tả bước 3,"[data-content-key=""process.step3Description""]",text,,Chia sẻ những gì bạn đang trăn trở. Từng tấm bài Clow sẽ dẫn lối cho bạn.
+TRUE,booking.tag,book,Nhãn đặt lịch,"[data-content-key=""booking.tag""]",text,,✦ Sẵn sàng bắt đầu?
+TRUE,booking.formTitle,book,Tiêu đề form,"[data-content-key=""booking.formTitle""]",text,,Đăng Ký Đặt Lịch
+TRUE,booking.footnote,book,Ghi chú phản hồi,"[data-content-key=""booking.footnote""]",text,,Chúng tôi sẽ liên hệ xác nhận lịch trong vòng 24 giờ.

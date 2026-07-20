@@ -33,8 +33,9 @@
 1. Trong Vercel → Project Settings → Environment Variables, tạo `CONTENT_API_URL` và `BOOKING_API_URL` với giá trị là hai Apps Script Web App deployment URL tương ứng, đều kết thúc bằng `/exec`. Áp dụng cho Production, Preview và Development theo nhu cầu.
 2. Không cần ghi Content API URL vào source. `/api/config` chỉ trả URL public này cho browser lúc chạy; không trả secret.
 3. Trong Content/Admin Script Properties, đặt `BOOKING_WEB_APP_URL` để public content response cung cấp Booking API URL cho landing.
+   Có thể cấu hình cùng giá trị này tại Admin → Bảng điều khiển → Kết nối form đặt lịch; chức năng chỉ dành cho tài khoản admin và lưu vào Script Properties.
 4. Đặt `environment: 'staging'`, cập nhật `releaseId` và giữ `paymentEnabled: false` tới khi đối soát xong.
-5. Redeploy sau khi thêm/chỉnh Environment Variable; kiểm tra `/api/config` trả `contentApiUrl` khác rỗng.
+5. Redeploy sau khi thêm/chỉnh Environment Variable; kiểm tra `/api/config` trả cả `contentApiUrl` và `bookingApiUrl` khác rỗng trên đúng deployment Production.
 6. Với Spreadsheet đã setup từ release cũ, chạy lại `setupContentSpreadsheet()` để append các content key còn thiếu; hàm giữ nguyên key đã có.
 7. Kiểm tra landing thực sự gọi `publicInit`, sau đó sửa thử một content key trên Sheet/Admin và xác nhận landing đổi sau khi cache được xóa.
 8. Kiểm tra CSP console, asset 404 và CORS.

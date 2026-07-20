@@ -323,7 +323,11 @@ function render() {
   renderRecords('section-list', state.data.sections || [], 'section');
   const isAdmin = state.data.session.role === 'admin';
   $('users-tab').hidden = !isAdmin;
-  if (isAdmin) renderUsers(state.data.users || []);
+  $('booking-config-card').hidden = !isAdmin;
+  if (isAdmin) {
+    $('booking-web-app-url').value = state.data.configuration?.bookingWebAppUrl || '';
+    renderUsers(state.data.users || []);
+  }
 }
 
 function renderHealthOverview() {
@@ -408,6 +412,19 @@ $('add-user').addEventListener('click', () => {
 
 $('add-package').addEventListener('click', () => {
   renderPackages([{ Code:'', Name:'', Price:1000, Duration:30, Unit:'phút', Icon:'icons/icon-star.svg', Featured:false, Tag:'', Features:'', 'Booking Note':'', Order:(state.data?.packages || []).length + 1, Enabled:true }, ...(state.data?.packages || [])]);
+});
+
+$('save-booking-config').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    const bookingWebAppUrl = $('booking-web-app-url').value.trim();
+    await api('saveBookingConfig', { bookingWebAppUrl });
+    notify('✦ Đã kết nối Booking Script');
+    await loadAdmin();
+  } catch (error) {
+    notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true);
+  } finally { button.disabled = false; }
 });
 
 if (state.token) {

@@ -31,6 +31,7 @@ function doPost(e) {
     if (body.action === 'savePackage') return jsonResponse_(true, saveRow_('Service Packages', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveNavigation') return jsonResponse_(true, saveRow_('Navigation', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveSection') return jsonResponse_(true, saveRow_('Section Order', body.data, requireSession_(body.token, ['admin','editor'])));
+    if (body.action === 'saveBookingConfig') return jsonResponse_(true, saveBookingConfig_(body.data || {}, requireSession_(body.token, ['admin'])));
     if (body.action === 'saveUser') return jsonResponse_(true, saveUser_(body.data || {}, requireSession_(body.token, ['admin'])));
     return jsonResponse_(false, null, 'NOT_FOUND', 'Action không tồn tại.');
   } catch (error) {
@@ -120,8 +121,20 @@ function requireSession_(token, roles) {
 function adminInit_(session) {
   const spreadsheet = getContentSpreadsheet_();
   const data = { session: session, health:{content:health_(),booking:bookingRemoteHealth_()}, operations:operationsSummary_(spreadsheet,session), content: rowsAsObjects_(spreadsheet.getSheetByName('Content')), packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')), navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')), sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')) };
-  if (session.role === 'admin') data.users = rowsAsObjects_(spreadsheet.getSheetByName('Admin Users')).map(user => ({ Username:user.Username, Role:user.Role, Status:user.Status, 'Display Name':user['Display Name'], 'Last Login':user['Last Login'] }));
+  if (session.role === 'admin') {
+    data.users = rowsAsObjects_(spreadsheet.getSheetByName('Admin Users')).map(user => ({ Username:user.Username, Role:user.Role, Status:user.Status, 'Display Name':user['Display Name'], 'Last Login':user['Last Login'] }));
+    data.configuration = { bookingWebAppUrl:String(PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '') };
+  }
   return data;
+}
+
+function saveBookingConfig_(data, session) {
+  const endpoint = String(data.bookingWebAppUrl || '').trim();
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec(?:\?.*)?$/i.test(endpoint)) throw appError_('VALIDATION_ERROR', 'URL Booking Script phải là Web App URL script.google.com kết thúc bằng /exec.');
+  PropertiesService.getScriptProperties().setProperty('BOOKING_WEB_APP_URL', endpoint);
+  CacheService.getScriptCache().remove(PUBLIC_CACHE_KEY);
+  audit_('save','success',session.username,session.role,'configuration','booking-web-app','','Đã cập nhật Booking Web App URL');
+  return { saved:true, health:bookingRemoteHealth_() };
 }
 
 function bookingRemoteHealth_() {

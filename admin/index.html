@@ -69,6 +69,7 @@
         <article class="status-card"><span class="section-kicker">Content API</span><strong id="content-health">Đang kiểm tra…</strong><small id="content-health-detail"></small></article>
         <article class="status-card"><span class="section-kicker">Booking API</span><strong id="booking-health">Đang kiểm tra…</strong><small id="booking-health-detail"></small></article>
         <article class="status-card"><span class="section-kicker">Backup gần nhất</span><strong id="backup-status">Chưa có dữ liệu</strong><small id="backup-detail"></small></article>
+        <article id="booking-config-card" class="status-card status-card-wide booking-config-card" hidden><div><span class="section-kicker">Kết nối form đặt lịch</span><strong>Booking Apps Script Web App</strong><small>Dán URL deployment kết thúc bằng <code>/exec</code>. URL được lưu trong Script Properties, không ghi vào Git.</small></div><div class="booking-config-form"><label for="booking-web-app-url">Booking Web App URL</label><input id="booking-web-app-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"><button id="save-booking-config" class="button button-primary" type="button">✦ Lưu kết nối</button></div></article>
         <article class="status-card status-card-wide"><span class="section-kicker">Lỗi gần nhất đã lọc</span><div id="recent-errors" class="recent-errors"></div></article>
       </section>
       <nav class="tabs" aria-label="Khu vực quản trị">

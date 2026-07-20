@@ -8,14 +8,15 @@ let publicData = fallbackData;
 let runtimeBookingApiUrl = appConfig.bookingApiUrl || '';
 
 async function resolveContentApiUrl() {
-  if (appConfig.contentApiUrl) return appConfig.contentApiUrl;
+  let contentApiUrl = String(appConfig.contentApiUrl || '').trim();
   try {
     const response = await fetch('/api/config', { credentials:'same-origin', cache:'no-store' });
-    if (!response.ok) return '';
+    if (!response.ok) return contentApiUrl;
     const runtimeConfig = await response.json();
     runtimeBookingApiUrl = String(runtimeConfig.bookingApiUrl || runtimeBookingApiUrl).trim();
-    return String(runtimeConfig.contentApiUrl || '').trim();
-  } catch (_) { return ''; }
+    contentApiUrl = String(runtimeConfig.contentApiUrl || contentApiUrl).trim();
+    return contentApiUrl;
+  } catch (_) { return contentApiUrl; }
 }
 
 function formatVnd(amount) {
@@ -533,6 +534,59 @@ const bookingForm = document.getElementById('booking-form');
 const pkgSelect = document.getElementById('f-pkg');
 const astroNote = document.getElementById('astro-note');
 const bookingStatus = document.getElementById('booking-status');
+const bookingFieldIds = ['f-name','f-phone','f-email','f-pkg','f-date'];
+
+function todayLocalIso() {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+}
+
+function normalizeVietnamPhone(value) {
+  const compact = String(value || '').replace(/[\s().-]/g,'');
+  if (/^0[35789][0-9]{8}$/.test(compact)) return `+84${compact.slice(1)}`;
+  if (/^84[35789][0-9]{8}$/.test(compact)) return `+${compact}`;
+  if (/^\+84[35789][0-9]{8}$/.test(compact)) return compact;
+  return '';
+}
+
+function setBookingFieldError(id, message) {
+  const input = document.getElementById(id);
+  const error = document.getElementById(`${id}-error`);
+  input?.closest('.form-group')?.classList.toggle('has-error', Boolean(message));
+  if (input) input.setAttribute('aria-invalid', String(Boolean(message)));
+  if (error) error.textContent = message;
+}
+
+function validateBookingForm() {
+  const name = document.getElementById('f-name').value.trim();
+  const phoneInput = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim().toLowerCase();
+  const pkg = document.getElementById('f-pkg').value;
+  const preferredDate = document.getElementById('f-date').value;
+  const phone = normalizeVietnamPhone(phoneInput);
+  const errors = {
+    'f-name': name.length < 2 ? 'Vui lòng nhập họ tên có ít nhất 2 ký tự.' : '',
+    'f-phone': phone ? '' : 'Số điện thoại Việt Nam không hợp lệ, ví dụ 0901 234 567.',
+    'f-email': /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && email.length <= 254 ? '' : 'Email không đúng định dạng, ví dụ ten@example.com.',
+    'f-pkg': getPackage(pkg) ? '' : 'Vui lòng chọn một gói dịch vụ.',
+    'f-date': !preferredDate ? 'Vui lòng chọn ngày mong muốn.' : (preferredDate < todayLocalIso() ? 'Ngày đặt lịch không được ở trong quá khứ.' : '')
+  };
+  bookingFieldIds.forEach(id => setBookingFieldError(id, errors[id]));
+  const firstInvalid = bookingFieldIds.find(id => errors[id]);
+  if (firstInvalid) document.getElementById(firstInvalid)?.focus();
+  return firstInvalid ? null : { name, phone, email, pkg, preferredDate };
+}
+
+const preferredDateInput = document.getElementById('f-date');
+if (preferredDateInput) {
+  const today = todayLocalIso();
+  preferredDateInput.min = today;
+  if (!preferredDateInput.value) preferredDateInput.value = today;
+}
+bookingFieldIds.forEach(id => {
+  const input = document.getElementById(id);
+  ['input','change'].forEach(eventName => input?.addEventListener(eventName, () => setBookingFieldError(id,'')));
+});
 
 if (pkgSelect && astroNote) {
   pkgSelect.addEventListener('change', () => {
@@ -546,19 +600,15 @@ if (pkgSelect && astroNote) {
 if (bookingForm) {
   bookingForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name    = document.getElementById('f-name').value.trim();
-    const phone   = document.getElementById('f-phone').value.trim();
-    const email   = document.getElementById('f-email').value.trim();
-    const pkg     = document.getElementById('f-pkg').value;
-    const topic   = document.getElementById('f-topic').value.trim();
-    const preferredDate = document.getElementById('f-date').value;
-    const partySize = Number(document.getElementById('f-party-size').value || 1);
-    const submitButton = document.getElementById('btn-submit-booking');
-
-    if (!name || !phone || !email || !pkg || !/^\S+@\S+\.\S+$/.test(email)) {
-      bookingStatus.textContent = 'Vui lòng kiểm tra các trường bắt buộc và địa chỉ email.';
+    const validated = validateBookingForm();
+    if (!validated) {
+      bookingStatus.textContent = 'Vui lòng kiểm tra lại các trường được đánh dấu.';
       return;
     }
+    const { name, phone, email, pkg, preferredDate } = validated;
+    const topic   = document.getElementById('f-topic').value.trim();
+    const partySize = Number(document.getElementById('f-party-size').value || 1);
+    const submitButton = document.getElementById('btn-submit-booking');
 
     const selectedPackage = getPackage(pkg);
     if (!selectedPackage) {
@@ -583,12 +633,12 @@ if (bookingForm) {
           body: JSON.stringify({ action: 'register', data: requestData })
         });
         const payload = await response.json();
-        if (!payload.ok || !payload.data?.orderId) throw new Error('BOOKING_FAILED');
+        if (!payload.ok || !payload.data?.orderId) throw new Error(payload.error?.message || 'Chưa thể ghi nhận đăng ký.');
         sessionStorage.removeItem('cafeCcpBookingAttempt');
         window.location.assign(`payment.html?${new URLSearchParams({ orderId: payload.data.orderId })}`);
         return;
-      } catch (_) {
-        bookingStatus.textContent = 'Chưa thể ghi nhận đăng ký. Vui lòng thử lại hoặc liên hệ qua Messenger.';
+      } catch (error) {
+        bookingStatus.textContent = error.message || 'Chưa thể ghi nhận đăng ký. Vui lòng thử lại.';
         submitButton.disabled = false;
         return;
       }

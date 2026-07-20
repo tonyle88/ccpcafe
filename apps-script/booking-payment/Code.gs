@@ -42,11 +42,14 @@ function register_(data) {
 }
 
 function validateBooking_(data) {
-  const clean={ name:String(data.name||'').trim(), phone:String(data.phone||'').replace(/\s/g,''), email:String(data.email||'').trim().toLowerCase(), packageCode:String(data.packageCode||''), preferredDate:String(data.preferredDate||''), partySize:Number(data.partySize||1), topic:String(data.topic||'').trim(), idempotencyKey:String(data.idempotencyKey||'') };
+  const rawPhone=String(data.phone||'').replace(/[\s().-]/g,''), normalizedPhone=/^0[35789][0-9]{8}$/.test(rawPhone)?'+84'+rawPhone.slice(1):(/^84[35789][0-9]{8}$/.test(rawPhone)?'+'+rawPhone:rawPhone);
+  const clean={ name:String(data.name||'').trim(), phone:normalizedPhone, email:String(data.email||'').trim().toLowerCase(), packageCode:String(data.packageCode||''), preferredDate:String(data.preferredDate||''), partySize:Number(data.partySize||1), topic:String(data.topic||'').trim(), idempotencyKey:String(data.idempotencyKey||'') };
   if(clean.name.length<2||clean.name.length>100) throw bookingError_('VALIDATION_ERROR','Họ tên không hợp lệ.');
-  if(!/^[0-9+().-]{8,20}$/.test(clean.phone)) throw bookingError_('VALIDATION_ERROR','Số điện thoại không hợp lệ.');
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean.email)) throw bookingError_('VALIDATION_ERROR','Email không hợp lệ.');
+  if(!/^\+84[35789][0-9]{8}$/.test(clean.phone)) throw bookingError_('VALIDATION_ERROR','Số điện thoại Việt Nam không hợp lệ.');
+  if(clean.email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean.email)) throw bookingError_('VALIDATION_ERROR','Email không hợp lệ.');
   if(!PACKAGE_CATALOG[clean.packageCode]) throw bookingError_('PACKAGE_UNAVAILABLE','Gói dịch vụ không khả dụng.');
+  const today=Utilities.formatDate(new Date(),'Asia/Ho_Chi_Minh','yyyy-MM-dd');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(clean.preferredDate)||clean.preferredDate<today) throw bookingError_('VALIDATION_ERROR','Ngày đặt lịch không hợp lệ hoặc đã ở trong quá khứ.');
   if(![1,2,3].includes(clean.partySize)) throw bookingError_('VALIDATION_ERROR','Số người không hợp lệ.');
   if(clean.topic.length>2000||clean.idempotencyKey.length<8||clean.idempotencyKey.length>100) throw bookingError_('VALIDATION_ERROR','Dữ liệu không hợp lệ.');
   return clean;

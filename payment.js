@@ -34,16 +34,21 @@ async function loadPaymentContentConfig() {
   return paymentContentConfig;
 }
 
+function resolveBankCode(payment,order) {
+  const legacyBankCode=String(order.payment?.qrUrl||'').match(/img\.vietqr\.io\/image\/([A-Za-z0-9]+)-/)?.[1]||'',rawName=String(payment.bankName||'').trim(),normalized=rawName.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const aliases={VIETCOMBANK:'VCB',NGANHANGVIETCOMBANK:'VCB',TECHCOMBANK:'TCB',VIETINBANK:'ICB',AGRIBANK:'VBA',MBBANK:'MB',MILITARYBANK:'MB',SACOMBANK:'STB',ACB:'ACB',BIDV:'BIDV',VPBANK:'VPB',TPBANK:'TPB',VIB:'VIB',SHB:'SHB',OCB:'OCB',HDBANK:'HDB',SEABANK:'SEAB',EXIMBANK:'EIB',NAMABANK:'NAB',PVCOMBANK:'PVCB'};
+  return String(payment.bankCode||legacyBankCode||aliases[normalized]||(/^[A-Za-z0-9]{2,20}$/.test(rawName)?rawName:'')).trim();
+}
+
 function createQrUrl(payment,order) {
-  const legacyBankCode=String(order.payment?.qrUrl||'').match(/img\.vietqr\.io\/image\/([A-Za-z0-9]+)-/)?.[1]||'';
-  const bankCode=payment.bankCode||legacyBankCode,accountNo=String(payment.accountNo||'').replace(/\s/g,'');
+  const bankCode=resolveBankCode(payment,order),accountNo=String(payment.accountNo||'').replace(/\s/g,'');
   if(!bankCode||!accountNo)return '';
   const params=new URLSearchParams({bank:bankCode,account:accountNo,amount:String(order.amount),info:String(order.transferContent),name:String(payment.accountName||'')});
   return `/api/vietqr?${params}`;
 }
 
 function createDirectQrUrl(payment,order) {
-  const legacyBankCode=String(order.payment?.qrUrl||'').match(/img\.vietqr\.io\/image\/([A-Za-z0-9]+)-/)?.[1]||'',bankCode=payment.bankCode||legacyBankCode,accountNo=String(payment.accountNo||'').replace(/\s/g,'');
+  const bankCode=resolveBankCode(payment,order),accountNo=String(payment.accountNo||'').replace(/\s/g,'');
   if(!bankCode||!accountNo)return '';
   return `https://img.vietqr.io/image/${encodeURIComponent(bankCode)}-${encodeURIComponent(accountNo)}-compact2.png?amount=${encodeURIComponent(order.amount)}&addInfo=${encodeURIComponent(order.transferContent)}&accountName=${encodeURIComponent(payment.accountName||'')}`;
 }

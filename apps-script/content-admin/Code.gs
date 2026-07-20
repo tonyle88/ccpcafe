@@ -32,6 +32,7 @@ function doPost(e) {
     if (body.action === 'saveNavigation') return jsonResponse_(true, saveRow_('Navigation', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveSection') return jsonResponse_(true, saveRow_('Section Order', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveBookingConfig') return jsonResponse_(true, saveBookingConfig_(body.data || {}, requireSession_(body.token, ['admin'])));
+    if (body.action === 'savePaymentConfig') return jsonResponse_(true, savePaymentConfigRemote_(body.data || {}, requireSession_(body.token, ['admin'])));
     if (body.action === 'saveUser') return jsonResponse_(true, saveUser_(body.data || {}, requireSession_(body.token, ['admin'])));
     return jsonResponse_(false, null, 'NOT_FOUND', 'Action không tồn tại.');
   } catch (error) {
@@ -123,7 +124,7 @@ function adminInit_(session) {
   const data = { session: session, health:{content:health_(),booking:bookingRemoteHealth_()}, operations:operationsSummary_(spreadsheet,session), content: rowsAsObjects_(spreadsheet.getSheetByName('Content')), packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')), navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')), sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')) };
   if (session.role === 'admin') {
     data.users = rowsAsObjects_(spreadsheet.getSheetByName('Admin Users')).map(user => ({ Username:user.Username, Role:user.Role, Status:user.Status, 'Display Name':user['Display Name'], 'Last Login':user['Last Login'] }));
-    data.configuration = { bookingWebAppUrl:String(PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '') };
+    data.configuration = { bookingWebAppUrl:String(PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || ''), payment:bookingAdminRequest_('getPaymentConfig',{}) };
   }
   return data;
 }
@@ -137,6 +138,26 @@ function saveBookingConfig_(data, session) {
   return { saved:true, health:bookingRemoteHealth_() };
 }
 
+function savePaymentConfigRemote_(data, session) {
+  const result=bookingAdminRequest_('savePaymentConfig',data);
+  if(!result.configured||result.error) throw appError_('CONFIG_ERROR',result.message||'Không thể lưu cấu hình thanh toán.');
+  audit_('save','success',session.username,session.role,'configuration','payment','mode='+String(result.mode||''),'Đã cập nhật cấu hình thanh toán');
+  return result;
+}
+
+function bookingAdminRequest_(action,data) {
+  const properties=PropertiesService.getScriptProperties(), endpoint=String(properties.getProperty('BOOKING_WEB_APP_URL')||'').trim(), secret=String(properties.getProperty('BOOKING_ADMIN_SECRET')||'');
+  if(!endpoint||secret.length<32) return {configured:false,error:'NOT_CONFIGURED',message:'Thiếu Booking Web App URL hoặc BOOKING_ADMIN_SECRET.'};
+  if(!/^https:\/\/(script\.google\.com|script\.googleusercontent\.com)\//i.test(endpoint)) return {configured:false,error:'INVALID_ENDPOINT',message:'Booking Web App URL không hợp lệ.'};
+  try {
+    const response=UrlFetchApp.fetch(endpoint,{method:'post',contentType:'text/plain;charset=utf-8',payload:JSON.stringify({action:action,data:data||{},adminSecret:secret}),muteHttpExceptions:true,followRedirects:true});
+    if(response.getResponseCode()!==200) return {configured:true,error:'HTTP_ERROR',message:'Booking Script phản hồi lỗi HTTP.'};
+    const payload=JSON.parse(response.getContentText());
+    if(!payload.ok||!payload.data) return {configured:true,error:(payload.error&&payload.error.code)||'INVALID_RESPONSE',message:(payload.error&&payload.error.message)||'Booking Script phản hồi không hợp lệ.'};
+    return Object.assign({configured:true},payload.data);
+  } catch(_) { return {configured:true,error:'UNAVAILABLE',message:'Không kết nối được Booking Script.'}; }
+}
+
 function bookingRemoteHealth_() {
   const endpoint = String(PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '').trim();
   if (!endpoint) return { service:'booking-payment', configured:false, ok:false, code:'NOT_CONFIGURED' };
@@ -148,7 +169,7 @@ function bookingRemoteHealth_() {
     const payload = JSON.parse(response.getContentText());
     if (!payload.ok || !payload.data) return { service:'booking-payment', configured:true, ok:false, code:'INVALID_RESPONSE' };
     const data = payload.data;
-    return { service:'booking-payment', configured:true, ok:data.ok === true, paymentConfigured:data.paymentConfigured === true, emailConfigured:data.emailConfigured === true, checks:Array.isArray(data.checks) ? data.checks.slice(0,10).map(check => ({name:String(check.name),ok:check.ok === true})) : [] };
+    return { service:'booking-payment', configured:true, ok:data.ok === true, paymentConfigured:data.paymentConfigured === true, paymentMode:String(data.paymentMode||'manual'), sepayConfigured:data.sepayConfigured === true, emailConfigured:data.emailConfigured === true, checks:Array.isArray(data.checks) ? data.checks.slice(0,10).map(check => ({name:String(check.name),ok:check.ok === true})) : [] };
   } catch (_) { return { service:'booking-payment', configured:true, ok:false, code:'UNAVAILABLE' }; }
 }
 

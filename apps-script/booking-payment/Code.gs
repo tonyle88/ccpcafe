@@ -17,6 +17,8 @@ function doPost(e) {
     if(body.action==='register') return bookingJson_(true,register_(body.data||{}));
     if(body.action==='manualConfirm') return bookingJson_(true,manualConfirm_(body.data||{}));
     if(body.action==='paymentWebhook') return bookingJson_(true,paymentWebhook_(body.data||{},body.signature));
+    if(body.action==='getPaymentConfig') return bookingJson_(true,getPaymentConfig_(body.adminSecret));
+    if(body.action==='savePaymentConfig') return bookingJson_(true,savePaymentConfig_(body.data||{},body.adminSecret));
     return bookingJson_(false,null,'NOT_FOUND','Action không tồn tại.');
   } catch(error) { logError_('api','post','',bookingSafe_(error)); return bookingJson_(false,null,error.code||'INTERNAL_ERROR',bookingSafe_(error)); }
 }
@@ -119,6 +121,20 @@ function paymentWebhook_(data,signature) {
 
 function parseSePayDate_(value) { const text=String(value||'').trim(); if(!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) return new Date(); const parsed=new Date(text.replace(' ','T')+'+07:00'); return isNaN(parsed.getTime())?new Date():parsed; }
 function paymentMode_(properties) { return String(properties.getProperty('PAYMENT_MODE')||'manual').toLowerCase()==='sepay'?'sepay':'manual'; }
+function requireBookingAdmin_(secret) { const expected=PropertiesService.getScriptProperties().getProperty('BOOKING_ADMIN_SECRET')||''; if(expected.length<32||String(secret||'')!==expected) throw bookingError_('FORBIDDEN','Kết nối quản trị không hợp lệ.'); }
+function getPaymentConfig_(secret) { requireBookingAdmin_(secret); const properties=PropertiesService.getScriptProperties(); return { mode:paymentMode_(properties), bankCode:properties.getProperty('PAYMENT_BANK_CODE')||'', bankName:properties.getProperty('PAYMENT_BANK_NAME')||'', accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'', accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'', publicSiteUrl:properties.getProperty('PUBLIC_SITE_URL')||'', webhookConfigured:!!properties.getProperty('PAYMENT_WEBHOOK_SECRET') }; }
+function savePaymentConfig_(data,secret) {
+  requireBookingAdmin_(secret);
+  const clean={mode:String(data.mode||'manual').trim().toLowerCase(),bankCode:String(data.bankCode||'').trim(),bankName:String(data.bankName||'').trim(),accountName:String(data.accountName||'').trim(),accountNo:String(data.accountNo||'').replace(/\s/g,''),publicSiteUrl:String(data.publicSiteUrl||'').trim().replace(/\/$/,'')};
+  if(!['manual','sepay'].includes(clean.mode)) throw bookingError_('VALIDATION_ERROR','Phương thức thanh toán không hợp lệ.');
+  if(!/^[A-Za-z0-9]{2,20}$/.test(clean.bankCode)) throw bookingError_('VALIDATION_ERROR','Mã ngân hàng VietQR không hợp lệ.');
+  if(clean.bankName.length<2||clean.bankName.length>100||clean.accountName.length<2||clean.accountName.length>150) throw bookingError_('VALIDATION_ERROR','Tên ngân hàng hoặc chủ tài khoản không hợp lệ.');
+  if(!/^[0-9]{5,30}$/.test(clean.accountNo)) throw bookingError_('VALIDATION_ERROR','Số tài khoản chỉ gồm 5–30 chữ số.');
+  if(clean.publicSiteUrl&&!/^https:\/\/[A-Za-z0-9.-]+(?::[0-9]+)?(?:\/.*)?$/i.test(clean.publicSiteUrl)) throw bookingError_('VALIDATION_ERROR','PUBLIC_SITE_URL phải dùng HTTPS.');
+  const properties=PropertiesService.getScriptProperties();
+  properties.setProperties({'PAYMENT_MODE':clean.mode,'PAYMENT_BANK_CODE':clean.bankCode,'PAYMENT_BANK_NAME':clean.bankName,'PAYMENT_ACCOUNT_NAME':clean.accountName,'PAYMENT_ACCOUNT_NO':clean.accountNo,'PUBLIC_SITE_URL':clean.publicSiteUrl},false);
+  return getPaymentConfig_(secret);
+}
 function paymentQrUrl_(row,properties) {
   const bankCode=String(properties.getProperty('PAYMENT_BANK_CODE')||'').trim(), accountNo=String(properties.getProperty('PAYMENT_ACCOUNT_NO')||'').replace(/\s/g,'');
   if(!bankCode||!accountNo) return '';

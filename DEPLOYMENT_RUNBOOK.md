@@ -11,7 +11,7 @@
 
 1. Tạo Spreadsheet staging mới.
 2. Tạo Apps Script gắn với Spreadsheet, chép file trong `apps-script/content-admin/`.
-3. Trong Script Properties đặt `CONTENT_SPREADSHEET_ID` và, sau khi booking deploy, `BOOKING_WEB_APP_URL`. Không ghi hai giá trị này vào source.
+3. Trong Script Properties đặt `CONTENT_SPREADSHEET_ID` và, sau khi booking deploy, `BOOKING_WEB_APP_URL`. Tạo thêm `BOOKING_ADMIN_SECRET` ngẫu nhiên tối thiểu 32 ký tự và dùng đúng cùng giá trị tại Booking Script để admin có thể lưu cấu hình thanh toán. Không ghi các giá trị này vào source.
 4. Chạy `setupContentSpreadsheet()` một lần.
 5. Trong Script Properties, đặt tạm `ADMIN_BOOTSTRAP_USERNAME` và `ADMIN_BOOTSTRAP_PASSWORD` tối thiểu 12 ký tự.
 6. Chạy `bootstrapAdminFromProperties()`. Hàm sẽ xóa property mật khẩu sau khi tạo user.
@@ -22,7 +22,7 @@
 
 1. Tạo Spreadsheet staging khác và Apps Script gắn với file đó.
 2. Chép file trong `apps-script/booking-payment/`.
-3. Trong Script Properties đặt `BOOKING_SPREADSHEET_ID`, `PAYMENT_BANK_CODE` (BIN hoặc mã ngân hàng VietQR), `PAYMENT_BANK_NAME`, `PAYMENT_ACCOUNT_NAME`, `PAYMENT_ACCOUNT_NO`. Không ghi các giá trị vào source.
+3. Trong Script Properties đặt `BOOKING_SPREADSHEET_ID`, `BOOKING_ADMIN_SECRET` (trùng Content/Admin Script), `PAYMENT_BANK_CODE` (BIN hoặc mã ngân hàng VietQR), `PAYMENT_BANK_NAME`, `PAYMENT_ACCOUNT_NAME`, `PAYMENT_ACCOUNT_NO`. Không ghi các giá trị vào source. Sau lần cấu hình đầu, quản trị viên có thể cập nhật mode/ngân hàng tại Admin → Thanh toán.
 4. Chạy `setupBookingSpreadsheet()`.
 5. Chọn một trong hai chế độ:
    - Không dùng SePay: đặt `PAYMENT_MODE=manual`; không cần webhook secret. Khách quét VietQR rồi bấm yêu cầu đối soát thủ công.

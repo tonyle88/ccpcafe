@@ -32,6 +32,10 @@ const adminScript=read('admin/app.js');assert(adminScript.includes("await api('s
 ['Tên hiển thị trên trang chủ','sectionLabels','managed-row'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu ${term}`));
 ['switch-button','order-button','Đã cập nhật thứ tự hiển thị'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu điều khiển ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
+['payment-tab','payment-config-form','payment-bank-code','payment-webhook-status'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thanh toán thiếu ${id}`));
+['renderPaymentConfig',"api('savePaymentConfig'",'paymentMode'].forEach(term=>assert(adminScript.includes(term)||contentBackend.includes(term),`Admin thanh toán thiếu contract ${term}`));
+['getPaymentConfig','savePaymentConfig','BOOKING_ADMIN_SECRET'].forEach(term=>assert(bookingBackend.includes(term),`Booking admin config thiếu ${term}`));
+assert(contentBackend.includes("body.action === 'savePaymentConfig'")&&contentBackend.includes('bookingAdminRequest_'),'Content admin phải chuyển cấu hình thanh toán sang Booking Script');
 const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));
 assert(landingScript.includes("fetch('/api/config'"),'Landing phải lấy CONTENT_API_URL runtime từ Vercel /api/config');
 assert(!landingScript.includes('window.open(`${appConfig.messengerUrl'),'Form booking không được fallback sang Facebook/Messenger');

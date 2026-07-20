@@ -323,11 +323,30 @@ function render() {
   renderRecords('section-list', state.data.sections || [], 'section');
   const isAdmin = state.data.session.role === 'admin';
   $('users-tab').hidden = !isAdmin;
+  $('payment-tab').hidden = !isAdmin;
   $('booking-config-card').hidden = !isAdmin;
   if (isAdmin) {
     $('booking-web-app-url').value = state.data.configuration?.bookingWebAppUrl || '';
+    renderPaymentConfig(state.data.configuration?.payment || {});
     renderUsers(state.data.users || []);
   }
+}
+
+function renderPaymentConfig(config) {
+  const ready=config.configured&&!config.error;
+  const mode=ready&&config.mode==='sepay'?'sepay':'manual';
+  document.querySelectorAll('input[name="payment-mode"]').forEach(input=>{input.checked=input.value===mode;});
+  $('payment-bank-code').value=ready?config.bankCode||'':'';
+  $('payment-bank-name').value=ready?config.bankName||'':'';
+  $('payment-account-name').value=ready?config.accountName||'':'';
+  $('payment-account-no').value=ready?config.accountNo||'':'';
+  $('payment-public-site-url').value=ready?config.publicSiteUrl||'':'';
+  $('payment-webhook-status').textContent=config.webhookConfigured?'Đã cấu hình ✓':'Chưa cấu hình';
+  $('payment-webhook-status').classList.toggle('is-ready',config.webhookConfigured===true);
+  $('payment-config-warning').textContent=ready
+    ? (mode==='sepay'&&!config.webhookConfigured?'ⓘ Đang chọn SePay nhưng PAYMENT_WEBHOOK_SECRET chưa được cấu hình trong Booking Script.':'ⓘ Thông tin này được lưu trực tiếp tại Booking Script và dùng để tạo QR trên trang thanh toán.')
+    : `ⓘ ${config.message||'Cần cấu hình BOOKING_ADMIN_SECRET giống nhau ở Content và Booking Script.'}`;
+  $('payment-config-form').querySelectorAll('input,button').forEach(control=>{control.disabled=!ready;});
 }
 
 function renderHealthOverview() {
@@ -339,7 +358,7 @@ function renderHealthOverview() {
   $('content-health').textContent = contentHealth.ok ? 'Hoạt động' : 'Cần kiểm tra';
   $('content-health-detail').textContent = `${(contentHealth.checks || []).filter(check => check.ok).length}/${(contentHealth.checks || []).length} sheet sẵn sàng`;
   $('booking-health').textContent = bookingHealth.ok ? 'Hoạt động' : (bookingHealth.configured === false ? 'Chưa cấu hình' : 'Không khả dụng');
-  $('booking-health-detail').textContent = bookingHealth.ok ? `Email ${bookingHealth.emailConfigured ? '✓' : '—'} · Thanh toán ${bookingHealth.paymentConfigured ? '✓' : '—'}` : (bookingHealth.code || 'UNKNOWN');
+  $('booking-health-detail').textContent = bookingHealth.ok ? `Email ${bookingHealth.emailConfigured ? '✓' : '—'} · Thanh toán ${bookingHealth.paymentConfigured ? '✓' : '—'} · ${bookingHealth.paymentMode === 'sepay' ? 'SePay' : 'Thủ công'}` : (bookingHealth.code || 'UNKNOWN');
   const backup = state.data.operations?.lastBackup;
   $('backup-status').textContent = backup ? (backup.status || 'Không rõ') : 'Chưa có backup';
   $('backup-detail').textContent = backup ? [backup.type, formatTimestamp(backup.timestamp), backup.fileName].filter(Boolean).join(' · ') : 'Sẽ cập nhật sau lần backup đầu tiên';
@@ -401,7 +420,7 @@ document.querySelectorAll('[data-tab]').forEach(button => {
   button.addEventListener('click', () => {
     const selected = button.dataset.tab;
     document.querySelectorAll('[data-tab]').forEach(tab => tab.classList.toggle('active', tab === button));
-    ['content','packages','navigation','sections','users'].forEach(name => { $(`${name}-panel`).hidden = selected !== name; });
+    ['content','packages','navigation','sections','payment','users'].forEach(name => { $(`${name}-panel`).hidden = selected !== name; });
   });
 });
 
@@ -425,6 +444,19 @@ $('save-booking-config').addEventListener('click', async event => {
   } catch (error) {
     notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true);
   } finally { button.disabled = false; }
+});
+
+$('payment-config-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button=$('save-payment-config'), mode=document.querySelector('input[name="payment-mode"]:checked')?.value||'manual';
+  button.disabled=true;
+  try {
+    const data={mode,bankCode:$('payment-bank-code').value.trim(),bankName:$('payment-bank-name').value.trim(),accountName:$('payment-account-name').value.trim(),accountNo:$('payment-account-no').value.replace(/\s/g,''),publicSiteUrl:$('payment-public-site-url').value.trim()};
+    await api('savePaymentConfig',data);
+    notify(`✦ Đã lưu thanh toán ${mode==='sepay'?'SePay':'thủ công'}`);
+    await loadAdmin();
+  } catch(error) { notify(`${error.message}${error.requestId?` · Mã ${error.requestId}`:''}`,true); }
+  finally { button.disabled=false; }
 });
 
 if (state.token) {

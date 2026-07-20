@@ -52,4 +52,8 @@ assert(elements.get('payment-qr').src.includes('bank=BIDV'), 'Phải suy ra bank
 vm.runInContext(`paymentContentConfig={};render({...${baseOrder},payment:{qrUrl:'https://img.vietqr.io/image/BIDV-05480409701-compact2.png'}})`, context);
 assert.equal(elements.get('payment-qr').src, 'https://img.vietqr.io/image/BIDV-05480409701-compact2.png', 'Phải giữ QR do Booking API trả về');
 
+vm.runInContext(`paymentContentConfig={};render({...${baseOrder},payment:{bankCode:'invalid/encrypted-bank-code-value-that-is-too-long=',bankName:'BIDV',accountName:'TEST',accountNo:'05480409701'}})`, context);
+assert(elements.get('payment-qr').src.includes('bank=BIDV'), 'Phải bỏ bankCode sai và suy ra mã từ tên ngân hàng');
+assert(!elements.get('payment-qr').src.includes('invalid'), 'Không được gửi bankCode sai tới proxy QR');
+
 console.log('Payment QR regression checks passed.');

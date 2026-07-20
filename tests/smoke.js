@@ -56,12 +56,14 @@ assert(paymentScript.includes("return `/api/vietqr?${params}`"),'Trình duyệt 
 assert(paymentScript.includes('createDirectQrUrl')&&paymentScript.includes('dataset.fallback'),'Payment phải thử ảnh VietQR trực tiếp nếu proxy lỗi');
 assert(paymentScript.includes("createQrUrl(order.payment,order)||backendPayment.qrUrl||''"),'Payment phải giữ QR backend khi không dựng được URL proxy');
 assert(paymentScript.includes('resolveBankCode')&&paymentScript.includes("BIDV:'BIDV'"),'Payment phải suy ra bankCode từ tên ngân hàng của deployment cũ');
+assert(paymentScript.includes("validCode(payment.bankCode)"),'Payment phải loại bankCode sai trước khi gọi VietQR');
 assert(paymentScript.includes("amount:String(order.amount)")&&!paymentScript.includes("searchParams.get('amount')"),'QR phải dùng amount từ Booking API, không lấy từ URL');
 assert(html.includes('booking-discount-summary')&&read('script.js').includes('updateBookingDiscountSummary'),'Form phải hiển thị ưu đãi theo số người');
 assert(contentBackend.includes('savePricingConfig_')&&contentBackend.includes('pricingConfig_'),'Content Admin phải lưu và public chính sách ưu đãi');
 assert(bookingBackend.includes('pricingPolicy_')&&bookingBackend.includes("getProperty('CONTENT_WEB_APP_URL')")&&bookingBackend.includes('discountPercent/100'),'Booking backend phải tự đọc và tính lại ưu đãi từ cấu hình admin');
 ['payment-qr','payment-mode','copy-transfer'].forEach(id=>assert(read('payment.html').includes(`id="${id}"`),`Payment UI thiếu ${id}`));
 ['PAYMENT_BANK_CODE','paymentQrUrl_','Payment Transaction ID'].forEach(term=>assert(bookingBackend.includes(term),`Payment backend thiếu ${term}`));
+assert(bookingBackend.includes('paymentBankCode_')&&bookingBackend.includes("BIDV:'BIDV'"),'Booking backend phải loại bankCode sai và suy ra mã từ tên ngân hàng');
 const vercelConfig=JSON.parse(read('vercel.json'));const cspHeaders=vercelConfig.headers.flatMap(rule=>rule.headers).filter(header=>header.key==='Content-Security-Policy');assert(cspHeaders.every(header=>header.value.includes('https://img.vietqr.io')),'Mọi CSP áp dụng cho payment phải cho phép ảnh QR VietQR');
 assert(paymentScript.includes("elements.qr.style.display = qrUrl ? 'block' : 'none'"),'Payment phải ẩn ảnh QR lỗi thay vì giữ khung trắng');
 const thankyouScript=read('thankyou.js');assert(thankyouScript.includes("url.searchParams.set('action', 'checkPayment')"),'Thank-you phải xác minh trạng thái từ backend');assert(!thankyouScript.includes("params.get('status')"),'Thank-you không được tin status từ URL');

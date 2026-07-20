@@ -35,9 +35,9 @@ async function loadPaymentContentConfig() {
 }
 
 function resolveBankCode(payment,order) {
-  const legacyBankCode=String(order.payment?.qrUrl||'').match(/img\.vietqr\.io\/image\/([A-Za-z0-9]+)-/)?.[1]||'',rawName=String(payment.bankName||'').trim(),normalized=rawName.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const validCode=value=>/^[A-Za-z0-9]{2,20}$/.test(String(value||'').trim())?String(value).trim():'',legacyBankCode=validCode(String(order.payment?.qrUrl||'').match(/img\.vietqr\.io\/image\/([A-Za-z0-9]+)-/)?.[1]),configuredBankCode=validCode(payment.bankCode),rawName=String(payment.bankName||'').trim(),normalized=rawName.toUpperCase().replace(/[^A-Z0-9]/g,'');
   const aliases={VIETCOMBANK:'VCB',NGANHANGVIETCOMBANK:'VCB',TECHCOMBANK:'TCB',VIETINBANK:'ICB',AGRIBANK:'VBA',MBBANK:'MB',MILITARYBANK:'MB',SACOMBANK:'STB',ACB:'ACB',BIDV:'BIDV',VPBANK:'VPB',TPBANK:'TPB',VIB:'VIB',SHB:'SHB',OCB:'OCB',HDBANK:'HDB',SEABANK:'SEAB',EXIMBANK:'EIB',NAMABANK:'NAB',PVCOMBANK:'PVCB'};
-  return String(payment.bankCode||legacyBankCode||aliases[normalized]||(/^[A-Za-z0-9]{2,20}$/.test(rawName)?rawName:'')).trim();
+  return configuredBankCode||legacyBankCode||aliases[normalized]||validCode(rawName);
 }
 
 function createQrUrl(payment,order) {

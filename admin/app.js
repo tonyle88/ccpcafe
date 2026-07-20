@@ -333,23 +333,18 @@ function render() {
 }
 
 function renderPaymentConfig(config) {
-  const ready=config.configured&&!config.error;
-  $('payment-booking-web-app-url').value=state.data.configuration?.bookingWebAppUrl||'';
-  $('payment-booking-admin-secret').value='';
-  $('payment-booking-admin-secret').placeholder=state.data.configuration?.bookingAdminSecretConfigured?'Secret đã lưu · nhập để thay đổi':'Nhập secret tối thiểu 32 ký tự';
-  const mode=ready&&config.mode==='sepay'?'sepay':'manual';
+  const mode=config.mode==='sepay'?'sepay':'manual';
   document.querySelectorAll('input[name="payment-mode"]').forEach(input=>{input.checked=input.value===mode;});
-  $('payment-bank-code').value=ready?config.bankCode||'':'';
-  $('payment-bank-name').value=ready?config.bankName||'':'';
-  $('payment-account-name').value=ready?config.accountName||'':'';
-  $('payment-account-no').value=ready?config.accountNo||'':'';
-  $('payment-public-site-url').value=ready?config.publicSiteUrl||'':'';
+  $('payment-bank-code').value=config.bankCode||'';
+  $('payment-bank-name').value=config.bankName||'';
+  $('payment-account-name').value=config.accountName||'';
+  $('payment-account-no').value=config.accountNo||'';
+  $('payment-public-site-url').value=config.publicSiteUrl||'';
   $('payment-webhook-status').textContent=config.webhookConfigured?'Đã cấu hình ✓':'Chưa cấu hình';
   $('payment-webhook-status').classList.toggle('is-ready',config.webhookConfigured===true);
-  $('payment-config-warning').textContent=ready
-    ? (mode==='sepay'&&!config.webhookConfigured?'ⓘ Đang chọn SePay nhưng PAYMENT_WEBHOOK_SECRET chưa được cấu hình trong Booking Script.':'ⓘ Thông tin này được lưu trực tiếp tại Booking Script và dùng để tạo QR trên trang thanh toán.')
-    : `ⓘ ${config.message||'Nhập URL và secret ở khối Kết nối bảo mật bên dưới. Secret phải trùng với Booking Script.'}`;
-  $('payment-config-form').querySelectorAll('input,button').forEach(control=>{control.disabled=!ready;});
+  $('payment-config-warning').textContent=mode==='sepay'&&!config.webhookConfigured
+    ? 'ⓘ Đang chọn SePay. Hãy bảo đảm SEPAY_API_KEY và PAYMENT_WEBHOOK_SECRET đã được cấu hình tại Vercel/Booking Script.'
+    : 'ⓘ Thông tin ngân hàng được lưu tại Content Admin và dùng trực tiếp để tạo QR trên trang thanh toán.';
 }
 
 function renderHealthOverview() {
@@ -447,20 +442,6 @@ $('save-booking-config').addEventListener('click', async event => {
   } catch (error) {
     notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true);
   } finally { button.disabled = false; }
-});
-
-$('payment-connection-form').addEventListener('submit', async event => {
-  event.preventDefault();
-  const button=$('save-payment-connection');button.disabled=true;
-  try {
-    const bookingWebAppUrl=$('payment-booking-web-app-url').value.trim(),bookingAdminSecret=$('payment-booking-admin-secret').value;
-    if(!bookingAdminSecret&&!state.data.configuration?.bookingAdminSecretConfigured) throw new Error('Vui lòng nhập BOOKING_ADMIN_SECRET tối thiểu 32 ký tự.');
-    await api('saveBookingConfig',{bookingWebAppUrl,bookingAdminSecret});
-    $('payment-booking-admin-secret').value='';
-    notify('✦ Đã lưu kết nối bảo mật');
-    await loadAdmin();
-  } catch(error) { notify(`${error.message}${error.requestId?` · Mã ${error.requestId}`:''}`,true); }
-  finally { button.disabled=false; }
 });
 
 $('payment-config-form').addEventListener('submit', async event => {

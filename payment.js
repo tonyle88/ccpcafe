@@ -19,6 +19,26 @@ let pollTimer;
 let pollAttempt = 0;
 let pollStartedAt = Date.now();
 let hiddenAt = 0;
+let paymentContentConfig = null;
+
+async function loadPaymentContentConfig() {
+  if (paymentContentConfig) return paymentContentConfig;
+  try {
+    let contentApiUrl=String(config.contentApiUrl||'').trim();
+    if(!contentApiUrl){const runtime=await fetch('/api/config',{credentials:'same-origin',cache:'no-store'});if(runtime.ok)contentApiUrl=String((await runtime.json()).contentApiUrl||'').trim();}
+    if(!contentApiUrl)return {};
+    const url=new URL(contentApiUrl);url.searchParams.set('action','publicInit');
+    const response=await fetch(url,{credentials:'omit'}),payload=await response.json();
+    paymentContentConfig=payload.ok&&payload.data?.config?.payment?payload.data.config.payment:{};
+  }catch(_){paymentContentConfig={};}
+  return paymentContentConfig;
+}
+
+function createQrUrl(payment,order) {
+  if(!payment.bankCode||!payment.accountNo)return order.payment?.qrUrl||'';
+  const base=`https://img.vietqr.io/image/${encodeURIComponent(payment.bankCode)}-${encodeURIComponent(String(payment.accountNo).replace(/\s/g,''))}-compact2.png`;
+  return `${base}?amount=${encodeURIComponent(order.amount)}&addInfo=${encodeURIComponent(order.transferContent)}&accountName=${encodeURIComponent(payment.accountName||'')}`;
+}
 
 function formatVnd(value) { return new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND' }).format(value); }
 function stopPolling() { clearTimeout(pollTimer); pollTimer = undefined; }
@@ -52,6 +72,9 @@ async function api(action, method = 'GET', data) {
 }
 
 function render(order) {
+  const configured=paymentContentConfig&&paymentContentConfig.bankCode?paymentContentConfig:{};
+  order.payment={...(order.payment||{}),...configured};
+  order.payment.qrUrl=createQrUrl(order.payment,order);
   elements.loading.hidden = true;
   elements.details.hidden = false;
   elements.error.textContent = '';
@@ -93,6 +116,7 @@ function render(order) {
 async function loadOrder() {
   try {
     if (!orderId) throw new Error('Thiếu mã đơn.');
+    await loadPaymentContentConfig();
     const payload = await api('checkPayment');
     if (!payload.ok) throw new Error(payload.error?.message || 'Không tải được đơn.');
     render(payload.data);

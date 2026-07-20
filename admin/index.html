@@ -87,12 +87,6 @@
       <section id="payment-panel" class="content-panel" hidden>
         <div class="panel-heading"><div><span class="section-kicker">Đăng ký &amp; đối soát</span><h2>Cấu hình thanh toán</h2></div><p>Chọn cách xác nhận chuyển khoản và cập nhật thông tin tạo mã VietQR.</p></div>
         <div id="payment-config-warning" class="admin-hint"></div>
-        <form id="payment-connection-form" class="payment-connection-form">
-          <div><span class="section-kicker">Kết nối bảo mật</span><strong>Booking Apps Script</strong><small>Secret phải trùng với <code>BOOKING_ADMIN_SECRET</code> trong Script Properties của Booking Script.</small></div>
-          <label>Booking Web App URL<input id="payment-booking-web-app-url" type="url" required placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></label>
-          <label>BOOKING_ADMIN_SECRET<input id="payment-booking-admin-secret" type="password" minlength="32" placeholder="Nhập secret tối thiểu 32 ký tự" autocomplete="new-password"></label>
-          <button id="save-payment-connection" class="button button-ghost" type="submit">Kết nối Booking Script</button>
-        </form>
         <form id="payment-config-form" class="payment-config-layout">
           <fieldset class="payment-mode-picker"><legend>Phương thức xác nhận thanh toán</legend>
             <label class="payment-mode-option"><input type="radio" name="payment-mode" value="manual"><span><strong>Đối soát thủ công</strong><small>Khách quét QR, bấm đã chuyển khoản và quản trị viên kiểm tra giao dịch.</small></span></label>

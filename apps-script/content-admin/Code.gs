@@ -8,7 +8,7 @@ const CONTENT_SCHEMA = Object.freeze({
   'Audit Log': ['Timestamp','Action','Status','Username','Role','Target Type','Target ID','Details','Message'],
   'Backup Log': ['Timestamp','Type','Status','Username','File ID','File Name','File URL','Details','Message']
 });
-const PUBLIC_CACHE_KEY = 'public-init-v3';
+const PUBLIC_CACHE_KEY = 'public-init-v4';
 
 function doGet(e) {
   const action = String((e && e.parameter && e.parameter.action) || 'health');
@@ -32,7 +32,7 @@ function doPost(e) {
     if (body.action === 'saveNavigation') return jsonResponse_(true, saveRow_('Navigation', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveSection') return jsonResponse_(true, saveRow_('Section Order', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveBookingConfig') return jsonResponse_(true, saveBookingConfig_(body.data || {}, requireSession_(body.token, ['admin'])));
-    if (body.action === 'savePaymentConfig') return jsonResponse_(true, savePaymentConfigRemote_(body.data || {}, requireSession_(body.token, ['admin'])));
+    if (body.action === 'savePaymentConfig') return jsonResponse_(true, savePaymentConfig_(body.data || {}, requireSession_(body.token, ['admin'])));
     if (body.action === 'saveUser') return jsonResponse_(true, saveUser_(body.data || {}, requireSession_(body.token, ['admin'])));
     return jsonResponse_(false, null, 'NOT_FOUND', 'Action không tồn tại.');
   } catch (error) {
@@ -72,7 +72,7 @@ function publicInit_() {
     packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')).filter(row => truthy_(row.Enabled)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(packagePublic_),
     navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')).filter(row => truthy_(row.Enabled)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(navigationPublic_),
     sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')).filter(row => truthy_(row.Visible)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(sectionPublic_),
-    config: { bookingApiUrl: PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '' }
+    config: { bookingApiUrl: PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '', payment:paymentConfig_() }
   };
   cache.put(PUBLIC_CACHE_KEY, JSON.stringify(result), 300);
   return result;
@@ -125,42 +125,45 @@ function adminInit_(session) {
   if (session.role === 'admin') {
     data.users = rowsAsObjects_(spreadsheet.getSheetByName('Admin Users')).map(user => ({ Username:user.Username, Role:user.Role, Status:user.Status, 'Display Name':user['Display Name'], 'Last Login':user['Last Login'] }));
     const properties=PropertiesService.getScriptProperties();
-    data.configuration = { bookingWebAppUrl:String(properties.getProperty('BOOKING_WEB_APP_URL') || ''), bookingAdminSecretConfigured:String(properties.getProperty('BOOKING_ADMIN_SECRET')||'').length>=32, payment:bookingAdminRequest_('getPaymentConfig',{}) };
+    data.configuration = { bookingWebAppUrl:String(properties.getProperty('BOOKING_WEB_APP_URL') || ''), payment:paymentConfigWithFallback_() };
   }
   return data;
 }
 
 function saveBookingConfig_(data, session) {
   const endpoint = String(data.bookingWebAppUrl || '').trim();
-  const adminSecret = String(data.bookingAdminSecret || '');
   if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec(?:\?.*)?$/i.test(endpoint)) throw appError_('VALIDATION_ERROR', 'URL Booking Script phải là Web App URL script.google.com kết thúc bằng /exec.');
-  if(adminSecret&&adminSecret.length<32) throw appError_('VALIDATION_ERROR','BOOKING_ADMIN_SECRET phải có tối thiểu 32 ký tự.');
   const properties=PropertiesService.getScriptProperties();
   properties.setProperty('BOOKING_WEB_APP_URL', endpoint);
-  if(adminSecret) properties.setProperty('BOOKING_ADMIN_SECRET',adminSecret);
   CacheService.getScriptCache().remove(PUBLIC_CACHE_KEY);
   audit_('save','success',session.username,session.role,'configuration','booking-web-app','','Đã cập nhật Booking Web App URL');
-  return { saved:true, adminSecretConfigured:String(properties.getProperty('BOOKING_ADMIN_SECRET')||'').length>=32, health:bookingRemoteHealth_() };
+  return { saved:true, health:bookingRemoteHealth_() };
 }
 
-function savePaymentConfigRemote_(data, session) {
-  const result=bookingAdminRequest_('savePaymentConfig',data);
-  if(!result.configured||result.error) throw appError_('CONFIG_ERROR',result.message||'Không thể lưu cấu hình thanh toán.');
-  audit_('save','success',session.username,session.role,'configuration','payment','mode='+String(result.mode||''),'Đã cập nhật cấu hình thanh toán');
-  return result;
+function savePaymentConfig_(data, session) {
+  const clean={mode:String(data.mode||'manual').trim().toLowerCase(),bankCode:String(data.bankCode||'').trim(),bankName:String(data.bankName||'').trim(),accountName:String(data.accountName||'').trim(),accountNo:String(data.accountNo||'').replace(/\s/g,''),publicSiteUrl:String(data.publicSiteUrl||'').trim().replace(/\/$/,'')};
+  if(!['manual','sepay'].includes(clean.mode)) throw appError_('VALIDATION_ERROR','Phương thức thanh toán không hợp lệ.');
+  if(!/^[A-Za-z0-9]{2,20}$/.test(clean.bankCode)) throw appError_('VALIDATION_ERROR','Mã ngân hàng VietQR không hợp lệ.');
+  if(clean.bankName.length<2||clean.bankName.length>100||clean.accountName.length<2||clean.accountName.length>150) throw appError_('VALIDATION_ERROR','Tên ngân hàng hoặc chủ tài khoản không hợp lệ.');
+  if(!/^[0-9]{5,30}$/.test(clean.accountNo)) throw appError_('VALIDATION_ERROR','Số tài khoản chỉ gồm 5–30 chữ số.');
+  if(clean.publicSiteUrl&&!/^https:\/\/[A-Za-z0-9.-]+(?::[0-9]+)?(?:\/.*)?$/i.test(clean.publicSiteUrl)) throw appError_('VALIDATION_ERROR','Địa chỉ website phải dùng HTTPS.');
+  PropertiesService.getScriptProperties().setProperties({'PAYMENT_MODE':clean.mode,'PAYMENT_BANK_CODE':clean.bankCode,'PAYMENT_BANK_NAME':clean.bankName,'PAYMENT_ACCOUNT_NAME':clean.accountName,'PAYMENT_ACCOUNT_NO':clean.accountNo,'PUBLIC_SITE_URL':clean.publicSiteUrl},false);
+  CacheService.getScriptCache().remove(PUBLIC_CACHE_KEY);
+  audit_('save','success',session.username,session.role,'configuration','payment','mode='+clean.mode,'Đã cập nhật cấu hình thanh toán');
+  return paymentConfig_();
 }
 
-function bookingAdminRequest_(action,data) {
-  const properties=PropertiesService.getScriptProperties(), endpoint=String(properties.getProperty('BOOKING_WEB_APP_URL')||'').trim(), secret=String(properties.getProperty('BOOKING_ADMIN_SECRET')||'');
-  if(!endpoint||secret.length<32) return {configured:false,error:'NOT_CONFIGURED',message:'Thiếu Booking Web App URL hoặc BOOKING_ADMIN_SECRET.'};
-  if(!/^https:\/\/(script\.google\.com|script\.googleusercontent\.com)\//i.test(endpoint)) return {configured:false,error:'INVALID_ENDPOINT',message:'Booking Web App URL không hợp lệ.'};
+function paymentConfig_() { const properties=PropertiesService.getScriptProperties(); return {configured:true,mode:String(properties.getProperty('PAYMENT_MODE')||'manual')==='sepay'?'sepay':'manual',bankCode:properties.getProperty('PAYMENT_BANK_CODE')||'',bankName:properties.getProperty('PAYMENT_BANK_NAME')||'',accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'',accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'',publicSiteUrl:properties.getProperty('PUBLIC_SITE_URL')||'',webhookConfigured:!!properties.getProperty('PAYMENT_WEBHOOK_SECRET')}; }
+function paymentConfigWithFallback_() {
+  const local=paymentConfig_(); if(local.bankCode&&local.accountNo)return local;
+  const endpoint=String(PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL')||'').trim();
+  if(!/^https:\/\/(script\.google\.com|script\.googleusercontent\.com)\//i.test(endpoint))return local;
   try {
-    const response=UrlFetchApp.fetch(endpoint,{method:'post',contentType:'text/plain;charset=utf-8',payload:JSON.stringify({action:action,data:data||{},adminSecret:secret}),muteHttpExceptions:true,followRedirects:true});
-    if(response.getResponseCode()!==200) return {configured:true,error:'HTTP_ERROR',message:'Booking Script phản hồi lỗi HTTP.'};
+    const separator=endpoint.indexOf('?')>=0?'&':'?',response=UrlFetchApp.fetch(endpoint+separator+'action=getPaymentConfig',{muteHttpExceptions:true,followRedirects:true});
+    if(response.getResponseCode()!==200)return local;
     const payload=JSON.parse(response.getContentText());
-    if(!payload.ok||!payload.data) return {configured:true,error:(payload.error&&payload.error.code)||'INVALID_RESPONSE',message:(payload.error&&payload.error.message)||'Booking Script phản hồi không hợp lệ.'};
-    return Object.assign({configured:true},payload.data);
-  } catch(_) { return {configured:true,error:'UNAVAILABLE',message:'Không kết nối được Booking Script.'}; }
+    return payload.ok&&payload.data?Object.assign({},local,payload.data,{configured:true}):local;
+  }catch(_){return local;}
 }
 
 function bookingRemoteHealth_() {

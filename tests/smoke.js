@@ -19,7 +19,7 @@ assert(contentBackend.includes("!/^https:\\/\\//i.test(href)"),'Navigation phả
 assert(contentBackend.includes("requireSession_(body.token, ['admin'])"),'API user phải chỉ cho admin');
 ['Bạn không thể tự hạ quyền','Phải giữ ít nhất một admin'].forEach(message=>assert(contentBackend.includes(message),`User guard thiếu: ${message}`));
 ['contentPublic_','navigationPublic_','sectionPublic_'].forEach(mapper=>assert(contentBackend.includes(`.map(${mapper})`),`Public API thiếu allowlist mapper ${mapper}`));
-assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v3'"),'Public cache key phải tăng khi contract đổi');
+assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v4'"),'Public cache key phải tăng khi contract đổi');
 assert(contentBackend.includes('missingContent')&&contentBackend.includes('existingContentKeys'),'Content seed phải migration idempotent cho Sheet hiện có');
 ['bookingRemoteHealth_','operationsSummary_','UrlFetchApp.fetch'].forEach(term=>assert(contentBackend.includes(term),`Admin dashboard backend thiếu ${term}`));
 assert(contentBackend.includes('script\\.google\\.com|script\\.googleusercontent\\.com'),'Booking health endpoint phải giới hạn Google Apps Script');
@@ -33,11 +33,10 @@ const adminScript=read('admin/app.js');assert(adminScript.includes("await api('s
 ['switch-button','order-button','Đã cập nhật thứ tự hiển thị'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu điều khiển ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
 ['payment-tab','payment-config-form','payment-bank-code','payment-webhook-status'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thanh toán thiếu ${id}`));
-['payment-connection-form','payment-booking-web-app-url','payment-booking-admin-secret'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin kết nối thanh toán thiếu ${id}`));
 ['renderPaymentConfig',"api('savePaymentConfig'",'paymentMode'].forEach(term=>assert(adminScript.includes(term)||contentBackend.includes(term),`Admin thanh toán thiếu contract ${term}`));
-assert(adminScript.includes("api('saveBookingConfig',{bookingWebAppUrl,bookingAdminSecret})"),'Admin phải lưu được URL và secret dạng write-only');
-['getPaymentConfig','savePaymentConfig','BOOKING_ADMIN_SECRET'].forEach(term=>assert(bookingBackend.includes(term),`Booking admin config thiếu ${term}`));
-assert(contentBackend.includes("body.action === 'savePaymentConfig'")&&contentBackend.includes('bookingAdminRequest_'),'Content admin phải chuyển cấu hình thanh toán sang Booking Script');
+assert(!adminHtml.includes('payment-connection-form')&&!adminHtml.includes('BOOKING_ADMIN_SECRET'),'Admin thanh toán không được yêu cầu kết nối Booking thừa');
+assert(bookingBackend.includes("action==='getPaymentConfig'")&&contentBackend.includes('paymentConfigWithFallback_'),'Admin phải tải được tài khoản cũ mà không cần SePay');
+assert(contentBackend.includes("body.action === 'savePaymentConfig'")&&contentBackend.includes('PAYMENT_BANK_CODE'),'Content admin phải tự lưu cấu hình thanh toán');
 const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));
 assert(landingScript.includes("fetch('/api/config'"),'Landing phải lấy CONTENT_API_URL runtime từ Vercel /api/config');
 assert(!landingScript.includes('window.open(`${appConfig.messengerUrl'),'Form booking không được fallback sang Facebook/Messenger');
@@ -46,6 +45,7 @@ assert(read('api/config.js').includes('bookingApiUrl'),'Runtime config phải c�
 assert(read('migration-kit/content.csv').split('\n').length>=27,'Migration content phải chứa đầy đủ key landing chính');
 assert(read('migration-kit/section-order.csv').includes('Section Key,Order,Visible,Label'),'Migration section phải có tên tiếng Việt');
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));
+['loadPaymentContentConfig','createQrUrl','config.payment'].forEach(term=>assert(paymentScript.includes(term)||contentBackend.includes(term),`Payment config public thiếu ${term}`));
 ['payment-qr','payment-mode','copy-transfer'].forEach(id=>assert(read('payment.html').includes(`id="${id}"`),`Payment UI thiếu ${id}`));
 ['PAYMENT_MODE','PAYMENT_BANK_CODE','paymentQrUrl_','Payment Transaction ID','PAYMENT_MISMATCH'].forEach(term=>assert(bookingBackend.includes(term),`Payment backend thiếu ${term}`));
 const sepayProxy=read('api/sepay-webhook.js');['SEPAY_API_KEY','PAYMENT_WEBHOOK_SECRET','timingSafeEqual','Apikey'].forEach(term=>assert(sepayProxy.includes(term),`SePay proxy thiếu ${term}`));

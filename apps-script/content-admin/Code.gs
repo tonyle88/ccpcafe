@@ -33,6 +33,7 @@ function doPost(e) {
     if (body.action === 'saveSection') return jsonResponse_(true, saveRow_('Section Order', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveBookingConfig') return jsonResponse_(true, saveBookingConfig_(body.data || {}, requireSession_(body.token, ['admin'])));
     if (body.action === 'savePaymentConfig') return jsonResponse_(true, savePaymentConfig_(body.data || {}, requireSession_(body.token, ['admin'])));
+    if (body.action === 'savePricingConfig') return jsonResponse_(true, savePricingConfig_(body.data || {}, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'saveUser') return jsonResponse_(true, saveUser_(body.data || {}, requireSession_(body.token, ['admin'])));
     return jsonResponse_(false, null, 'NOT_FOUND', 'Action không tồn tại.');
   } catch (error) {
@@ -72,7 +73,7 @@ function publicInit_() {
     packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')).filter(row => truthy_(row.Enabled)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(packagePublic_),
     navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')).filter(row => truthy_(row.Enabled)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(navigationPublic_),
     sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')).filter(row => truthy_(row.Visible)).sort((a,b) => Number(a.Order)-Number(b.Order)).map(sectionPublic_),
-    config: { bookingApiUrl: PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '', payment:paymentConfig_() }
+    config: { bookingApiUrl: PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || '', payment:paymentConfig_(), pricing:pricingConfig_() }
   };
   cache.put(PUBLIC_CACHE_KEY, JSON.stringify(result), 300);
   return result;
@@ -121,7 +122,7 @@ function requireSession_(token, roles) {
 
 function adminInit_(session) {
   const spreadsheet = getContentSpreadsheet_();
-  const data = { session: session, health:{content:health_(),booking:bookingRemoteHealth_()}, operations:operationsSummary_(spreadsheet,session), content: rowsAsObjects_(spreadsheet.getSheetByName('Content')), packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')), navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')), sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')) };
+  const data = { session: session, health:{content:health_(),booking:bookingRemoteHealth_()}, operations:operationsSummary_(spreadsheet,session), content: rowsAsObjects_(spreadsheet.getSheetByName('Content')), packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')), navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')), sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')), pricing:pricingConfig_() };
   if (session.role === 'admin') {
     data.users = rowsAsObjects_(spreadsheet.getSheetByName('Admin Users')).map(user => ({ Username:user.Username, Role:user.Role, Status:user.Status, 'Display Name':user['Display Name'], 'Last Login':user['Last Login'] }));
     const properties=PropertiesService.getScriptProperties();
@@ -150,6 +151,22 @@ function savePaymentConfig_(data, session) {
   CacheService.getScriptCache().remove(PUBLIC_CACHE_KEY);
   audit_('save','success',session.username,session.role,'configuration','payment','mode='+clean.mode,'Đã cập nhật cấu hình thanh toán');
   return paymentConfig_();
+}
+
+function savePricingConfig_(data, session) {
+  const clean={twoPeoplePercent:Number(data.twoPeoplePercent),threePeoplePercent:Number(data.threePeoplePercent),twoPeopleText:String(data.twoPeopleText||'').trim(),threePeopleText:String(data.threePeopleText||'').trim()};
+  if(!Number.isFinite(clean.twoPeoplePercent)||!Number.isFinite(clean.threePeoplePercent)||clean.twoPeoplePercent<0||clean.twoPeoplePercent>90||clean.threePeoplePercent<0||clean.threePeoplePercent>90) throw appError_('VALIDATION_ERROR','Mức giảm phải từ 0 đến 90%.');
+  if(clean.threePeoplePercent<clean.twoPeoplePercent) throw appError_('VALIDATION_ERROR','Mức giảm cho 3 người không được thấp hơn 2 người.');
+  if(clean.twoPeopleText.length<3||clean.twoPeopleText.length>180||clean.threePeopleText.length<3||clean.threePeopleText.length>180) throw appError_('VALIDATION_ERROR','Nội dung thông báo ưu đãi phải từ 3–180 ký tự.');
+  PropertiesService.getScriptProperties().setProperties({'DISCOUNT_2_PERCENT':String(clean.twoPeoplePercent),'DISCOUNT_3_PERCENT':String(clean.threePeoplePercent),'DISCOUNT_2_TEXT':clean.twoPeopleText,'DISCOUNT_3_TEXT':clean.threePeopleText},false);
+  CacheService.getScriptCache().remove(PUBLIC_CACHE_KEY);
+  audit_('save','success',session.username,session.role,'configuration','group-discount','2='+clean.twoPeoplePercent+';3='+clean.threePeoplePercent,'Đã cập nhật ưu đãi nhóm');
+  return pricingConfig_();
+}
+
+function pricingConfig_() {
+  const properties=PropertiesService.getScriptProperties(),numberOrDefault=function(key,fallback){const raw=properties.getProperty(key);if(raw===null||raw==='')return fallback;const value=Number(raw);return Number.isFinite(value)&&value>=0&&value<=90?value:fallback;};
+  return {twoPeoplePercent:numberOrDefault('DISCOUNT_2_PERCENT',10),threePeoplePercent:numberOrDefault('DISCOUNT_3_PERCENT',15),twoPeopleText:properties.getProperty('DISCOUNT_2_TEXT')||'Đi 2 người được giảm {percent}% — bạn tiết kiệm {discount}, còn {final}.',threePeopleText:properties.getProperty('DISCOUNT_3_TEXT')||'Đi 3 người được giảm {percent}% — bạn tiết kiệm {discount}, còn {final}.'};
 }
 
 function paymentConfig_() { const properties=PropertiesService.getScriptProperties(); return {configured:true,mode:'manual',bankCode:properties.getProperty('PAYMENT_BANK_CODE')||'',bankName:properties.getProperty('PAYMENT_BANK_NAME')||'',accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'',accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'',publicSiteUrl:properties.getProperty('PUBLIC_SITE_URL')||''}; }

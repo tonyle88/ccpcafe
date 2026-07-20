@@ -27,6 +27,31 @@ function getPackage(code) {
   return (publicData.packages || []).find(item => item.code === code);
 }
 
+function getPricingPolicy() {
+  const pricing=publicData.config?.pricing||{};
+  return {twoPeoplePercent:Number(pricing.twoPeoplePercent??10),threePeoplePercent:Number(pricing.threePeoplePercent??15),twoPeopleText:String(pricing.twoPeopleText||'Đi 2 người được giảm {percent}% — bạn tiết kiệm {discount}, còn {final}.'),threePeopleText:String(pricing.threePeopleText||'Đi 3 người được giảm {percent}% — bạn tiết kiệm {discount}, còn {final}.')};
+}
+
+function interpolateDiscountText(template,values) {
+  return String(template).replaceAll('{percent}',String(values.percent)).replaceAll('{base}',formatVnd(values.base)).replaceAll('{discount}',formatVnd(values.discount)).replaceAll('{final}',formatVnd(values.final));
+}
+
+function updateBookingDiscountSummary() {
+  const root=document.getElementById('booking-discount-summary'),partySize=Number(document.getElementById('f-party-size')?.value||1),pkg=getPackage(document.getElementById('f-pkg')?.value);
+  if(!root||!pkg||partySize<2){if(root)root.hidden=true;return;}
+  const policy=getPricingPolicy(),percent=partySize===2?policy.twoPeoplePercent:policy.threePeoplePercent,template=partySize===2?policy.twoPeopleText:policy.threePeopleText,discount=Math.round(Number(pkg.price)*percent/100),final=Number(pkg.price)-discount;
+  document.getElementById('booking-discount-message').textContent=interpolateDiscountText(template,{percent,base:Number(pkg.price),discount,final});
+  document.getElementById('booking-base-price').textContent=formatVnd(pkg.price);
+  document.getElementById('booking-final-price').textContent=formatVnd(final);
+  root.hidden=false;
+}
+
+function renderPricingPolicyViews() {
+  const policy=getPricingPolicy(),two=document.querySelector('#discount-2 .discount-pct'),three=document.querySelector('#discount-3 .discount-pct');
+  if(two)two.textContent=`Giảm ${policy.twoPeoplePercent}%`;
+  if(three)three.textContent=`Giảm ${policy.threePeoplePercent}%`;
+}
+
 function isSafePublicUrl(value) {
   const url = String(value || '').trim();
   return url.startsWith('#') || (url.startsWith('/') && !url.startsWith('//')) || /^https:\/\//i.test(url) || /^[a-z0-9][a-z0-9._\/-]*$/i.test(url);
@@ -87,6 +112,8 @@ function renderPublicData() {
   renderNavigation();
   renderSections();
   renderPackageViews();
+  renderPricingPolicyViews();
+  updateBookingDiscountSummary();
 }
 
 function getBookingIdempotencyKey() {
@@ -622,8 +649,10 @@ if (pkgSelect && astroNote) {
     astroNote.style.display = selectedPackage?.bookingNote ? 'block' : 'none';
     const note = astroNote.querySelector('p');
     if (note && selectedPackage?.bookingNote) note.textContent = `✦ ${selectedPackage.bookingNote}`;
+    updateBookingDiscountSummary();
   });
 }
+document.getElementById('f-party-size')?.addEventListener('change',updateBookingDiscountSummary);
 
 if (bookingForm) {
   bookingForm.addEventListener('submit', async (e) => {

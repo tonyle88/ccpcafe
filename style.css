@@ -1637,6 +1637,7 @@ body:hover #custom-cursor { opacity: 1; }
   margin: 0;
   line-height: 1.6;
 }
+.booking-discount-summary{display:grid;gap:9px;margin-top:10px;padding:14px 16px;border:1px solid rgba(240,208,128,.42);border-radius:13px;background:linear-gradient(135deg,rgba(240,208,128,.12),rgba(149,105,203,.12));color:var(--cream)}.booking-discount-summary[hidden]{display:none}.booking-discount-summary strong{color:var(--gold-light);font-family:var(--font-body);font-size:.88rem;line-height:1.45}.booking-discount-summary>span{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 18px;color:rgba(251,247,255,.66);font-family:var(--font-body);font-size:.8rem}.booking-discount-summary del{margin-left:5px}.booking-discount-summary b{margin-left:5px;color:#fff;font-size:.94rem}
 
 .form-submit-btn {
   display: flex;

@@ -321,6 +321,7 @@ function render() {
   renderPackages(state.data.packages || []);
   renderRecords('navigation-list', state.data.navigation || [], 'navigation');
   renderRecords('section-list', state.data.sections || [], 'section');
+  renderPricingConfig(state.data.pricing || {});
   const isAdmin = state.data.session.role === 'admin';
   $('users-tab').hidden = !isAdmin;
   $('payment-tab').hidden = !isAdmin;
@@ -339,6 +340,24 @@ function renderPaymentConfig(config) {
   $('payment-account-no').value=config.accountNo||'';
   $('payment-public-site-url').value=config.publicSiteUrl||'';
   $('payment-config-warning').textContent='ⓘ Thông tin ngân hàng được lưu tại Content Admin và dùng trực tiếp để tạo VietQR. Đối soát SePay đang tạm gác lại.';
+}
+
+function pricingPreview(text,percent) {
+  const base=400000,discount=Math.round(base*Number(percent||0)/100),format=value=>new Intl.NumberFormat('vi-VN').format(value)+'đ';
+  return String(text||'').replaceAll('{percent}',String(percent||0)).replaceAll('{base}',format(base)).replaceAll('{discount}',format(discount)).replaceAll('{final}',format(base-discount));
+}
+
+function renderPricingConfig(config) {
+  $('pricing-2-percent').value=config.twoPeoplePercent??10;
+  $('pricing-3-percent').value=config.threePeoplePercent??15;
+  $('pricing-2-text').value=config.twoPeopleText||'Đi 2 người được giảm {percent}% — bạn tiết kiệm {discount}, còn {final}.';
+  $('pricing-3-text').value=config.threePeopleText||'Đi 3 người được giảm {percent}% — bạn tiết kiệm {discount}, còn {final}.';
+  updatePricingPreviews();
+}
+
+function updatePricingPreviews() {
+  $('pricing-2-preview').textContent='Xem trước: '+pricingPreview($('pricing-2-text').value,$('pricing-2-percent').value);
+  $('pricing-3-preview').textContent='Xem trước: '+pricingPreview($('pricing-3-text').value,$('pricing-3-percent').value);
 }
 
 function renderHealthOverview() {
@@ -412,7 +431,7 @@ document.querySelectorAll('[data-tab]').forEach(button => {
   button.addEventListener('click', () => {
     const selected = button.dataset.tab;
     document.querySelectorAll('[data-tab]').forEach(tab => tab.classList.toggle('active', tab === button));
-    ['content','packages','navigation','sections','payment','users'].forEach(name => { $(`${name}-panel`).hidden = selected !== name; });
+    ['content','packages','navigation','sections','pricing','payment','users'].forEach(name => { $(`${name}-panel`).hidden = selected !== name; });
   });
 });
 
@@ -449,6 +468,13 @@ $('payment-config-form').addEventListener('submit', async event => {
     await loadAdmin();
   } catch(error) { notify(`${error.message}${error.requestId?` · Mã ${error.requestId}`:''}`,true); }
   finally { button.disabled=false; }
+});
+
+['pricing-2-percent','pricing-3-percent','pricing-2-text','pricing-3-text'].forEach(id=>$(id).addEventListener('input',updatePricingPreviews));
+$('pricing-config-form').addEventListener('submit',async event=>{
+  event.preventDefault(); const button=$('save-pricing-config'); button.disabled=true;
+  try { await api('savePricingConfig',{twoPeoplePercent:Number($('pricing-2-percent').value),threePeoplePercent:Number($('pricing-3-percent').value),twoPeopleText:$('pricing-2-text').value.trim(),threePeopleText:$('pricing-3-text').value.trim()}); notify('✦ Đã lưu ưu đãi nhóm'); await loadAdmin(); }
+  catch(error){notify(`${error.message}${error.requestId?` · Mã ${error.requestId}`:''}`,true);} finally{button.disabled=false;}
 });
 
 if (state.token) {

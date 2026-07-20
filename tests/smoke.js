@@ -33,6 +33,7 @@ const adminScript=read('admin/app.js');assert(adminScript.includes("await api('s
 ['switch-button','order-button','Đã cập nhật thứ tự hiển thị'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu điều khiển ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
 ['payment-tab','payment-config-form','payment-bank-code'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thanh toán thiếu ${id}`));
+['pricing-panel','pricing-config-form','pricing-2-percent','pricing-3-text'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin ưu đãi nhóm thiếu ${id}`));
 assert(adminHtml.includes('Chuyển khoản &amp; đối soát thủ công')&&!adminHtml.includes('Tự động qua SePay'),'Admin hiện tại phải tập trung đối soát thủ công');
 ['renderPaymentConfig',"api('savePaymentConfig'",'paymentMode'].forEach(term=>assert(adminScript.includes(term)||contentBackend.includes(term),`Admin thanh toán thiếu contract ${term}`));
 assert(!adminHtml.includes('payment-connection-form')&&!adminHtml.includes('BOOKING_ADMIN_SECRET'),'Admin thanh toán không được yêu cầu kết nối Booking thừa');
@@ -55,6 +56,9 @@ assert(paymentScript.includes("return `/api/vietqr?${params}`"),'Trình duyệt 
 assert(paymentScript.includes('createDirectQrUrl')&&paymentScript.includes('dataset.fallback'),'Payment phải thử ảnh VietQR trực tiếp nếu proxy lỗi');
 assert(paymentScript.includes('resolveBankCode')&&paymentScript.includes("BIDV:'BIDV'"),'Payment phải suy ra bankCode từ tên ngân hàng của deployment cũ');
 assert(paymentScript.includes("amount:String(order.amount)")&&!paymentScript.includes("searchParams.get('amount')"),'QR phải dùng amount từ Booking API, không lấy từ URL');
+assert(html.includes('booking-discount-summary')&&read('script.js').includes('updateBookingDiscountSummary'),'Form phải hiển thị ưu đãi theo số người');
+assert(contentBackend.includes('savePricingConfig_')&&contentBackend.includes('pricingConfig_'),'Content Admin phải lưu và public chính sách ưu đãi');
+assert(bookingBackend.includes('pricingPolicy_')&&bookingBackend.includes("getProperty('CONTENT_WEB_APP_URL')")&&bookingBackend.includes('discountPercent/100'),'Booking backend phải tự đọc và tính lại ưu đãi từ cấu hình admin');
 ['payment-qr','payment-mode','copy-transfer'].forEach(id=>assert(read('payment.html').includes(`id="${id}"`),`Payment UI thiếu ${id}`));
 ['PAYMENT_BANK_CODE','paymentQrUrl_','Payment Transaction ID'].forEach(term=>assert(bookingBackend.includes(term),`Payment backend thiếu ${term}`));
 const vercelConfig=JSON.parse(read('vercel.json'));const cspHeaders=vercelConfig.headers.flatMap(rule=>rule.headers).filter(header=>header.key==='Content-Security-Policy');assert(cspHeaders.every(header=>header.value.includes('https://img.vietqr.io')),'Mọi CSP áp dụng cho payment phải cho phép ảnh QR VietQR');

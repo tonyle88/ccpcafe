@@ -22,7 +22,7 @@
 
 1. Tạo Spreadsheet staging khác và Apps Script gắn với file đó.
 2. Chép file trong `apps-script/booking-payment/`.
-3. Trong Script Properties đặt `BOOKING_SPREADSHEET_ID`, `PAYMENT_BANK_CODE` (BIN hoặc mã ngân hàng VietQR), `PAYMENT_BANK_NAME`, `PAYMENT_ACCOUNT_NAME`, `PAYMENT_ACCOUNT_NO`. Không ghi các giá trị vào source. Các giá trị hiện có được Admin dùng làm dữ liệu gợi ý lần đầu; sau đó cấu hình public được quản lý tại Admin → Thanh toán.
+3. Trong Script Properties đặt `BOOKING_SPREADSHEET_ID`, `CONTENT_WEB_APP_URL` (URL deployment Content/Admin kết thúc bằng `/exec`), `PAYMENT_BANK_CODE` (BIN hoặc mã ngân hàng VietQR), `PAYMENT_BANK_NAME`, `PAYMENT_ACCOUNT_NAME`, `PAYMENT_ACCOUNT_NO`. Không ghi các giá trị vào source. `CONTENT_WEB_APP_URL` giúp backend dùng đúng công thức tại Admin → Ưu đãi nhóm; khi tạm mất kết nối hệ thống dùng mặc định 10%/15%.
 4. Chạy `setupBookingSpreadsheet()`.
 5. Giai đoạn hiện tại dùng đối soát thủ công: khách quét VietQR rồi bấm yêu cầu kiểm tra. SePay được tạm gác và không tham gia health check hay giao diện Admin.
 6. `OWNER_EMAIL` có thể để trống; hệ thống mặc định dùng email của tài khoản deploy. Đặt thêm `PUBLIC_SITE_URL=https://<domain>` để email xác nhận có nút quay lại trang thanh toán; không có dấu `/` cuối.

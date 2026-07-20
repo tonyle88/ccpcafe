@@ -8,6 +8,8 @@ packages.forEach(item=>{assert(item.price>0,`Giá ${item.code} phải dương`);
 const html=read('index.html');['config.js','data.js','script.js'].forEach(file=>assert(html.includes(`src="${file}"`),`Thiếu ${file} trong index.html`));
 ['payment.html','thankyou.html','admin/index.html','vercel.json'].forEach(file=>assert(fs.existsSync(path.join(root,file)),`Thiếu ${file}`));
 const bookingBackend=read('apps-script/booking-payment/Code.gs');packages.forEach(item=>assert(bookingBackend.includes(`'${item.code}'`),`Backend thiếu package ${item.code}`));
+const contentBackend=read('apps-script/content-admin/Code.gs');['saveNavigation','saveSection'].forEach(action=>assert(contentBackend.includes(`body.action === '${action}'`),`Content backend thiếu action ${action}`));
+assert(contentBackend.includes("!/^https:\\/\\//i.test(href)"),'Navigation phải chặn URL không an toàn');
+const adminHtml=read('admin/index.html');['navigation-panel','sections-panel'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thiếu panel ${id}`));
 JSON.parse(read('vercel.json'));JSON.parse(read('package.json'));JSON.parse(read('apps-script/content-admin/appsscript.json'));JSON.parse(read('apps-script/booking-payment/appsscript.json'));
 console.log(`Smoke checks passed: ${packages.length} packages, configs and deployment artifacts valid.`);
-

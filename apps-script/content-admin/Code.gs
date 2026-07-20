@@ -28,6 +28,8 @@ function doPost(e) {
     if (body.action === 'adminInit') return jsonResponse_(true, adminInit_(requireSession_(body.token)));
     if (body.action === 'saveContent') return jsonResponse_(true, saveRow_('Content', body.data, requireSession_(body.token, ['admin','editor'])));
     if (body.action === 'savePackage') return jsonResponse_(true, saveRow_('Service Packages', body.data, requireSession_(body.token, ['admin','editor'])));
+    if (body.action === 'saveNavigation') return jsonResponse_(true, saveRow_('Navigation', body.data, requireSession_(body.token, ['admin','editor'])));
+    if (body.action === 'saveSection') return jsonResponse_(true, saveRow_('Section Order', body.data, requireSession_(body.token, ['admin','editor'])));
     return jsonResponse_(false, null, 'NOT_FOUND', 'Action không tồn tại.');
   } catch (error) {
     return jsonResponse_(false, null, error.code || 'INTERNAL_ERROR', safeMessage_(error));
@@ -118,9 +120,11 @@ function adminInit_(session) {
 function saveRow_(sheetName, data, session) {
   const sheet = getContentSpreadsheet_().getSheetByName(sheetName);
   const headers = CONTENT_SCHEMA[sheetName];
-  const keyName = sheetName === 'Content' ? 'Key' : 'Code';
+  const keyNames = { 'Content':'Key', 'Service Packages':'Code', 'Navigation':'Key', 'Section Order':'Section Key' };
+  const keyName = keyNames[sheetName];
   const key = String(data[keyName] || '').trim();
   if (!key) throw appError_('VALIDATION_ERROR', 'Thiếu mã định danh.');
+  validateManagedRow_(sheetName, data);
   const rows = sheet.getDataRange().getValues();
   let rowNumber = 0;
   for (let i = 1; i < rows.length; i++) if (String(rows[i][headers.indexOf(keyName)]) === key) rowNumber = i + 1;
@@ -133,6 +137,20 @@ function saveRow_(sheetName, data, session) {
   CacheService.getScriptCache().remove('public-init-v1');
   audit_('save','success',session.username,session.role,sheetName,key,'','Đã lưu');
   return { saved: true, id: key };
+}
+
+function validateManagedRow_(sheetName, data) {
+  if (sheetName === 'Navigation') {
+    const href = String(data.Href || '').trim();
+    const isInternalPath = href.startsWith('/') && !href.startsWith('//');
+    if (!href || (!href.startsWith('#') && !isInternalPath && !/^https:\/\//i.test(href))) {
+      throw appError_('VALIDATION_ERROR', 'Liên kết phải là anchor, đường dẫn nội bộ hoặc HTTPS.');
+    }
+  }
+  if (sheetName === 'Navigation' || sheetName === 'Section Order') {
+    const order = Number(data.Order);
+    if (!Number.isInteger(order) || order < 0 || order > 999) throw appError_('VALIDATION_ERROR', 'Thứ tự phải là số nguyên từ 0 đến 999.');
+  }
 }
 
 function health_() {

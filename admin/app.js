@@ -46,18 +46,29 @@ function notify(message, isError = false) {
   toastTimer = setTimeout(() => { toast.hidden = true; }, 3500);
 }
 
-function field(label, value, onChange, type = 'text') {
+function field(label, value, onChange, type = 'text', readOnly = false) {
   const wrapper = document.createElement('label');
   wrapper.textContent = label;
   const input = document.createElement(type === 'textarea' ? 'textarea' : 'input');
-  input.value = value ?? '';
-  input.addEventListener('input', () => onChange(input.value));
+  input.type = type === 'textarea' ? undefined : type;
+  if (type === 'checkbox') input.checked = value === true || String(value).toLowerCase() === 'true' || String(value) === '1';
+  else input.value = value ?? '';
+  input.readOnly = readOnly;
+  input.addEventListener('input', () => onChange(type === 'checkbox' ? input.checked : (type === 'number' ? Number(input.value) : input.value)));
   wrapper.appendChild(input);
   return wrapper;
 }
 
+const recordViews = {
+  content: { idKey:'Key', action:'saveContent', fields:[['Value','textarea']] },
+  package: { idKey:'Code', action:'savePackage', fields:[['Name','text'],['Price','number'],['Duration','number'],['Enabled','checkbox']] },
+  navigation: { idKey:'Key', action:'saveNavigation', fields:[['Label','text'],['Href','text'],['Order','number'],['Enabled','checkbox']] },
+  section: { idKey:'Section Key', action:'saveSection', fields:[['Order','number'],['Visible','checkbox']] }
+};
+
 function renderRecords(targetId, records, kind) {
   const root = $(targetId);
+  const view = recordViews[kind];
   root.replaceChildren();
   if (!records.length) {
     const empty = document.createElement('p');
@@ -70,17 +81,14 @@ function renderRecords(targetId, records, kind) {
     const record = { ...original };
     const row = document.createElement('div');
     row.className = 'record';
-    const isContent = kind === 'content';
-    const idKey = isContent ? 'Key' : 'Code';
-    const valueKey = isContent ? 'Value' : 'Name';
-    row.append(field(idKey, record[idKey], () => {}));
-    row.append(field(valueKey, record[valueKey], value => { record[valueKey] = value; }, isContent ? 'textarea' : 'text'));
+    row.append(field(view.idKey, record[view.idKey], () => {}, 'text', true));
+    view.fields.forEach(([key, type]) => row.append(field(key, record[key], value => { record[key] = value; }, type)));
     const save = document.createElement('button');
     save.textContent = 'Lưu thay đổi';
     save.addEventListener('click', async () => {
       save.disabled = true;
       try {
-        await api(isContent ? 'saveContent' : 'savePackage', record);
+        await api(view.action, record);
         notify('✦ Đã lưu thành công');
         await loadAdmin();
       } catch (error) {
@@ -103,6 +111,8 @@ function render() {
   $('health').classList.toggle('health-error', !state.data.health.ok);
   renderRecords('content-list', state.data.content || [], 'content');
   renderRecords('package-list', state.data.packages || [], 'package');
+  renderRecords('navigation-list', state.data.navigation || [], 'navigation');
+  renderRecords('section-list', state.data.sections || [], 'section');
 }
 
 async function loadAdmin() {
@@ -143,8 +153,7 @@ document.querySelectorAll('[data-tab]').forEach(button => {
   button.addEventListener('click', () => {
     const selected = button.dataset.tab;
     document.querySelectorAll('[data-tab]').forEach(tab => tab.classList.toggle('active', tab === button));
-    $('content-panel').hidden = selected !== 'content';
-    $('packages-panel').hidden = selected !== 'packages';
+    ['content','packages','navigation','sections'].forEach(name => { $(`${name}-panel`).hidden = selected !== name; });
   });
 });
 

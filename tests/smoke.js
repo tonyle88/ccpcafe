@@ -54,6 +54,7 @@ const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilityc
 ['loadPaymentContentConfig','createQrUrl','config.payment'].forEach(term=>assert(paymentScript.includes(term)||contentBackend.includes(term),`Payment config public thiếu ${term}`));
 assert(paymentScript.includes("return `/api/vietqr?${params}`"),'Trình duyệt phải tải QR cùng domain để không bị CSP chặn');
 assert(paymentScript.includes('createDirectQrUrl')&&paymentScript.includes('dataset.fallback'),'Payment phải thử ảnh VietQR trực tiếp nếu proxy lỗi');
+assert(paymentScript.includes("createQrUrl(order.payment,order)||backendPayment.qrUrl||''"),'Payment phải giữ QR backend khi không dựng được URL proxy');
 assert(paymentScript.includes('resolveBankCode')&&paymentScript.includes("BIDV:'BIDV'"),'Payment phải suy ra bankCode từ tên ngân hàng của deployment cũ');
 assert(paymentScript.includes("amount:String(order.amount)")&&!paymentScript.includes("searchParams.get('amount')"),'QR phải dùng amount từ Booking API, không lấy từ URL');
 assert(html.includes('booking-discount-summary')&&read('script.js').includes('updateBookingDiscountSummary'),'Form phải hiển thị ưu đãi theo số người');

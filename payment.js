@@ -85,9 +85,10 @@ async function api(action, method = 'GET', data) {
 }
 
 function render(order) {
-  const configured=paymentContentConfig&&paymentContentConfig.bankCode?paymentContentConfig:{};
-  order.payment={...(order.payment||{}),...configured};
-  order.payment.qrUrl=createQrUrl(order.payment,order);
+  const configured=paymentContentConfig&&typeof paymentContentConfig==='object'?paymentContentConfig:{};
+  const backendPayment=order.payment||{};
+  order.payment={...backendPayment,...configured};
+  order.payment.qrUrl=createQrUrl(order.payment,order)||backendPayment.qrUrl||'';
   const directQrUrl=createDirectQrUrl(order.payment,order);
   elements.loading.hidden = true;
   elements.details.hidden = false;

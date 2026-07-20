@@ -3,6 +3,6 @@
   "private": true,
   "scripts": {
     "check": "node --check script.js && node --check payment.js && node --check thankyou.js && node --check admin/app.js && node --check api/config.js && node --check api/vietqr.js && node --check < apps-script/content-admin/Code.gs && node --check < apps-script/booking-payment/Code.gs",
-    "test": "node tests/smoke.js && node tests/vietqr-proxy.js"
+    "test": "node tests/smoke.js && node tests/payment-qr.js && node tests/vietqr-proxy.js"
   }
 }

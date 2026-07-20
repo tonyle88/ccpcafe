@@ -371,7 +371,7 @@ function renderHealthOverview() {
 function formatTimestamp(value) {
   if (!value) return '';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('vi-VN');
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false});
 }
 
 async function loadAdmin() {

@@ -485,7 +485,11 @@
 
               <div class="form-group">
                 <label for="f-date">Ngày mong muốn *</label>
-                <input type="date" id="f-date" name="preferredDate" required aria-describedby="f-date-error" />
+                <div class="date-input-wrap">
+                  <input type="date" id="f-date" name="preferredDate" required aria-describedby="f-date-error" />
+                  <span id="f-date-placeholder" class="date-placeholder">Vui lòng chọn ngày</span>
+                  <button id="f-date-open" class="date-open-button" type="button" aria-label="Mở lịch chọn ngày">▦</button>
+                </div>
                 <small class="form-error" id="f-date-error"></small>
               </div>
 

@@ -602,7 +602,14 @@ const preferredDateInput = document.getElementById('f-date');
 if (preferredDateInput) {
   const today = todayLocalIso();
   preferredDateInput.min = today;
-  if (!preferredDateInput.value) preferredDateInput.value = today;
+  const placeholder = document.getElementById('f-date-placeholder');
+  const syncDatePlaceholder = () => { const hasValue=Boolean(preferredDateInput.value); if (placeholder) placeholder.hidden=hasValue; preferredDateInput.classList.toggle('is-empty',!hasValue); };
+  const openDatePicker = () => { try { preferredDateInput.showPicker?.(); } catch (_) { preferredDateInput.focus(); } };
+  preferredDateInput.addEventListener('input', syncDatePlaceholder);
+  preferredDateInput.addEventListener('change', syncDatePlaceholder);
+  preferredDateInput.addEventListener('click', openDatePicker);
+  document.getElementById('f-date-open')?.addEventListener('click', openDatePicker);
+  syncDatePlaceholder();
 }
 bookingFieldIds.forEach(id => {
   const input = document.getElementById(id);

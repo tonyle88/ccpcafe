@@ -43,6 +43,10 @@ assert(landingScript.includes("fetch('/api/config'"),'Landing phải lấy CONTE
 assert(!landingScript.includes('window.open(`${appConfig.messengerUrl'),'Form booking không được fallback sang Facebook/Messenger');
 assert(read('api/config.js').includes('bookingApiUrl'),'Runtime config phải cấp Booking API trực tiếp');
 ['normalizeVietnamPhone','todayLocalIso','validateBookingForm','Ngày đặt lịch không được ở trong quá khứ'].forEach(term=>assert(landingScript.includes(term),`Frontend booking validation thiếu ${term}`));
+['f-date-placeholder','f-date-open'].forEach(id=>assert(html.includes(`id="${id}"`),`Form ngày thiếu ${id}`));
+assert(!landingScript.includes('preferredDateInput.value = today'),'Form ngày không được tự chọn hôm nay');
+['showPicker','syncDatePlaceholder'].forEach(term=>assert(landingScript.includes(term),`Date picker thiếu ${term}`));
+['bookingDateVi_','dd/MM/yyyy','setSpreadsheetTimeZone'].forEach(term=>assert(bookingBackend.includes(term),`Định dạng ngày Việt Nam thiếu ${term}`));
 assert(read('migration-kit/content.csv').split('\n').length>=27,'Migration content phải chứa đầy đủ key landing chính');
 assert(read('migration-kit/section-order.csv').includes('Section Key,Order,Visible,Label'),'Migration section phải có tên tiếng Việt');
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));

@@ -100,7 +100,7 @@ function createPackageCard(pkg) {
   const name = document.createElement('h3'); name.className = 'pkg-name'; name.textContent = pkg.name; article.appendChild(name);
   const price = document.createElement('div'); price.className = 'pkg-price';
   const priceNumber = document.createElement('span'); priceNumber.className = 'price-num'; priceNumber.textContent = formatVnd(pkg.price);
-  const duration = document.createElement('span'); duration.className = 'price-dur'; duration.textContent = `/ ${pkg.duration} phút`; price.append(priceNumber, duration); article.appendChild(price);
+  const duration = document.createElement('span'); duration.className = 'price-dur'; duration.textContent = `/ ${pkg.duration} ${pkg.unit || 'phút'}`; price.append(priceNumber, duration); article.appendChild(price);
   const features = document.createElement('ul'); features.className = 'pkg-features';
   (pkg.features || []).forEach(feature => { const item = document.createElement('li'); const star = document.createElement('span'); star.textContent = '✦'; item.append(star, document.createTextNode(` ${feature}`)); features.appendChild(item); });
   article.appendChild(features);
@@ -118,7 +118,7 @@ function renderPackageViews() {
       const iconWrap = document.createElement('span'); iconWrap.className = 'bhl-icon';
       const icon = document.createElement('img'); icon.src = pkg.icon; icon.alt = ''; icon.className = 'bhl-icon-img'; iconWrap.appendChild(icon);
       const text = document.createElement('span'); text.append(document.createTextNode(pkg.name), document.createElement('br'));
-      const strong = document.createElement('strong'); strong.textContent = `${formatVnd(pkg.price)} / ${pkg.duration}ph`; text.appendChild(strong);
+      const strong = document.createElement('strong'); strong.textContent = `${formatVnd(pkg.price)} / ${pkg.duration} ${pkg.unit || 'phút'}`; text.appendChild(strong);
       item.append(iconWrap, text); return item;
     }));
   }
@@ -133,7 +133,7 @@ function populatePackageSelect() {
   (publicData.packages || []).forEach(pkg => {
     const option = document.createElement('option');
     option.value = pkg.code;
-    option.textContent = `${pkg.name} – ${formatVnd(pkg.price)} / ${pkg.duration} phút`;
+    option.textContent = `${pkg.name} – ${formatVnd(pkg.price)} / ${pkg.duration} ${pkg.unit || 'phút'}`;
     select.appendChild(option);
   });
   if (getPackage(selected)) select.value = selected;
@@ -587,7 +587,7 @@ if (bookingForm) {
       `Họ tên: ${name}`,
       `SĐT: ${phone}`,
       `Email: ${email}`,
-      `Gói: ${selectedPackage.name} – ${formatVnd(selectedPackage.price)}/${selectedPackage.duration} phút`,
+      `Gói: ${selectedPackage.name} – ${formatVnd(selectedPackage.price)}/${selectedPackage.duration} ${selectedPackage.unit || 'phút'}`,
       preferredDate ? `Ngày mong muốn: ${preferredDate}` : '',
       `Số người: ${partySize}`,
       topic ? `Chủ đề: ${topic}` : '',

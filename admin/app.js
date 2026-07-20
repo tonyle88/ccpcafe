@@ -64,10 +64,48 @@ function field(label, value, onChange, type = 'text', readOnly = false) {
 }
 
 const recordViews = {
-  package: { idKey:'Code', action:'savePackage', fields:[['Name','text'],['Price','number'],['Duration','number'],['Enabled','checkbox']] },
   navigation: { idKey:'Key', action:'saveNavigation', fields:[['Label','text'],['Href','text'],['Order','number'],['Enabled','checkbox']] },
   section: { idKey:'Section Key', action:'saveSection', fields:[['Order','number'],['Visible','checkbox']] }
 };
+
+function renderPackages(records) {
+  const root = $('package-list');
+  root.replaceChildren();
+  if (!records.length) {
+    const empty = document.createElement('p'); empty.className = 'empty-state'; empty.textContent = 'Chưa có gói dịch vụ.'; root.appendChild(empty); return;
+  }
+  records.forEach(record => root.appendChild(createPackageEditor(record)));
+}
+
+function createPackageEditor(original) {
+  const record = { Unit:'phút', Enabled:true, Featured:false, Order:0, ...original };
+  const isNew = !record.Code;
+  const card = document.createElement('article'); card.className = 'package-editor';
+  card.append(field('Code', record.Code, value => { record.Code = value.trim().toLowerCase(); }, 'text', !isNew));
+  card.append(field('Tên gói', record.Name, value => { record.Name = value; }));
+  card.append(field('Giá (VND)', record.Price, value => { record.Price = value; }, 'number'));
+  card.append(field('Thời lượng', record.Duration, value => { record.Duration = value; }, 'number'));
+  card.append(selectField('Đơn vị', record.Unit, ['phút','giờ'], value => { record.Unit = value; }));
+  card.append(field('Thứ tự', record.Order, value => { record.Order = value; }, 'number'));
+  card.append(field('Icon', record.Icon, value => { record.Icon = value; }));
+  card.append(field('Tag', record.Tag, value => { record.Tag = value; }));
+  card.append(field('Hiển thị', record.Enabled, value => { record.Enabled = value; }, 'checkbox'));
+  card.append(field('Featured', record.Featured, value => { record.Featured = value; }, 'checkbox'));
+  const features = field('Features (mỗi dòng một mục)', String(record.Features || '').split('|').join('\n'), value => { record.Features = value.split('\n').map(item => item.trim()).filter(Boolean).join('|'); }, 'textarea');
+  features.className = 'package-wide'; card.append(features);
+  const note = field('Booking note', record['Booking Note'], value => { record['Booking Note'] = value; }, 'textarea');
+  note.className = 'package-wide'; card.append(note);
+  const save = document.createElement('button'); save.textContent = isNew ? 'Tạo gói' : 'Lưu gói';
+  save.addEventListener('click', async () => {
+    save.disabled = true;
+    try {
+      await api('savePackage', record); notify('✦ Đã lưu gói dịch vụ'); await loadAdmin();
+    } catch (error) { notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true); }
+    finally { save.disabled = false; }
+  });
+  card.append(save);
+  return card;
+}
 
 function renderContentRecords(records) {
   const root = $('content-list');
@@ -207,7 +245,7 @@ function render() {
   $('identity').textContent = `${state.data.session.displayName || state.data.session.username} · ${state.data.session.role}`;
   renderHealthOverview();
   renderContentRecords(state.data.content || []);
-  renderRecords('package-list', state.data.packages || [], 'package');
+  renderPackages(state.data.packages || []);
   renderRecords('navigation-list', state.data.navigation || [], 'navigation');
   renderRecords('section-list', state.data.sections || [], 'section');
   const isAdmin = state.data.session.role === 'admin';
@@ -293,6 +331,10 @@ document.querySelectorAll('[data-tab]').forEach(button => {
 $('add-user').addEventListener('click', () => {
   if (state.data?.session?.role !== 'admin') return;
   renderUsers([{ Username:'', Role:'editor', Status:'active', 'Display Name':'', Password:'' }, ...(state.data.users || [])]);
+});
+
+$('add-package').addEventListener('click', () => {
+  renderPackages([{ Code:'', Name:'', Price:1000, Duration:30, Unit:'phút', Icon:'icons/icon-star.svg', Featured:false, Tag:'', Features:'', 'Booking Note':'', Order:(state.data?.packages || []).length + 1, Enabled:true }, ...(state.data?.packages || [])]);
 });
 
 if (state.token) {

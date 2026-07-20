@@ -211,6 +211,24 @@ function validateManagedRow_(sheetName, data) {
       if ((attribute === 'href' || attribute === 'src') && !isSafeManagedUrl_(value)) throw appError_('VALIDATION_ERROR', 'URL nội dung không an toàn.');
     }
   }
+  if (sheetName === 'Service Packages') {
+    const code = String(data.Code || '').trim();
+    const name = String(data.Name || '').trim();
+    const price = Number(data.Price), duration = Number(data.Duration), order = Number(data.Order);
+    const unit = String(data.Unit || '').trim();
+    const icon = String(data.Icon || '').trim();
+    const tag = String(data.Tag || '').trim();
+    const features = String(data.Features || '').split('|').map(item => item.trim()).filter(Boolean);
+    const bookingNote = String(data['Booking Note'] || '');
+    if (!/^[a-z0-9][a-z0-9-]{1,63}$/.test(code)) throw appError_('VALIDATION_ERROR', 'Package code không hợp lệ.');
+    if (name.length < 2 || name.length > 100) throw appError_('VALIDATION_ERROR', 'Tên gói không hợp lệ.');
+    if (!Number.isInteger(price) || price < 1000 || price > 100000000) throw appError_('VALIDATION_ERROR', 'Giá gói phải là số nguyên hợp lệ.');
+    if (!Number.isInteger(duration) || duration < 5 || duration > 1440) throw appError_('VALIDATION_ERROR', 'Thời lượng phải từ 5 đến 1.440 phút.');
+    if (!['phút','giờ'].includes(unit)) throw appError_('VALIDATION_ERROR', 'Đơn vị thời lượng không hợp lệ.');
+    if (!icon || !isSafeManagedUrl_(icon)) throw appError_('VALIDATION_ERROR', 'Icon URL không an toàn.');
+    if (tag.length > 80 || bookingNote.length > 1000 || features.length > 20 || features.some(item => item.length > 200)) throw appError_('VALIDATION_ERROR', 'Tag, features hoặc booking note vượt giới hạn.');
+    if (!Number.isInteger(order) || order < 0 || order > 999) throw appError_('VALIDATION_ERROR', 'Thứ tự phải là số nguyên từ 0 đến 999.');
+  }
   if (sheetName === 'Navigation') {
     const href = String(data.Href || '').trim();
     const isInternalPath = href.startsWith('/') && !href.startsWith('//');

@@ -12,8 +12,19 @@
       <p class="eyebrow">Đăng ký đã được ghi nhận</p><h1 id="payment-title">Thông tin thanh toán</h1>
       <div id="payment-loading">Đang tải đơn…</div>
       <div id="payment-details" hidden>
-        <dl><div><dt>Mã đơn</dt><dd id="order-id"></dd></div><div><dt>Gói</dt><dd id="package-name"></dd></div><div><dt>Số tiền</dt><dd id="amount"></dd></div><div><dt>Nội dung CK</dt><dd id="transfer-content"></dd></div><div><dt>Trạng thái</dt><dd id="payment-status"></dd></div></dl>
-        <div id="manual-payment-note" class="notice"><strong id="bank-name"></strong><br><span id="account-name"></span><br><span id="account-no"></span></div>
+        <p id="payment-mode" class="mode-badge"></p>
+        <div class="payment-grid">
+          <div class="qr-panel">
+            <img id="payment-qr" alt="Mã QR chuyển khoản cho đơn hàng" width="360" height="360">
+            <p id="qr-unavailable" class="notice" hidden>Chưa tạo được mã QR. Vui lòng dùng thông tin chuyển khoản bên cạnh.</p>
+          </div>
+          <div>
+            <dl><div><dt>Mã đơn</dt><dd id="order-id"></dd></div><div><dt>Gói</dt><dd id="package-name"></dd></div><div><dt>Số tiền</dt><dd id="amount"></dd></div><div><dt>Trạng thái</dt><dd id="payment-status"></dd></div></dl>
+            <div id="manual-payment-note" class="notice"><strong id="bank-name"></strong><br><span id="account-name"></span><br><span id="account-no"></span></div>
+            <div class="transfer-row"><div><span>Nội dung chuyển khoản</span><strong id="transfer-content"></strong></div><button id="copy-transfer" class="copy-button" type="button">Sao chép</button></div>
+          </div>
+        </div>
+        <p id="mode-help" class="mode-help"></p>
         <button id="manual-confirm" type="button">Tôi đã chuyển khoản</button>
       </div>
       <p id="payment-error" class="error" role="alert"></p>

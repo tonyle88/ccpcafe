@@ -22,11 +22,14 @@
 
 1. Tạo Spreadsheet staging khác và Apps Script gắn với file đó.
 2. Chép file trong `apps-script/booking-payment/`.
-3. Trong Script Properties đặt `BOOKING_SPREADSHEET_ID`, `PAYMENT_BANK_NAME`, `PAYMENT_ACCOUNT_NAME`, `PAYMENT_ACCOUNT_NO`. Không ghi các giá trị vào source.
+3. Trong Script Properties đặt `BOOKING_SPREADSHEET_ID`, `PAYMENT_BANK_CODE` (BIN hoặc mã ngân hàng VietQR), `PAYMENT_BANK_NAME`, `PAYMENT_ACCOUNT_NAME`, `PAYMENT_ACCOUNT_NO`. Không ghi các giá trị vào source.
 4. Chạy `setupBookingSpreadsheet()`.
-5. `OWNER_EMAIL` có thể để trống; hệ thống mặc định dùng email của tài khoản deploy. Chưa đặt webhook secret khi chưa có provider.
-6. Deploy Web App và kiểm tra `?action=health`.
-7. Tạo booking synthetic và xác nhận đủ cột, số tiền, email/log.
+5. Chọn một trong hai chế độ:
+   - Không dùng SePay: đặt `PAYMENT_MODE=manual`; không cần webhook secret. Khách quét VietQR rồi bấm yêu cầu đối soát thủ công.
+   - Có SePay: đặt `PAYMENT_MODE=sepay` và tạo `PAYMENT_WEBHOOK_SECRET` ngẫu nhiên, dài tối thiểu 32 byte. Secret này phải trùng giá trị trong Vercel, không gửi cho SePay và không đưa vào Git.
+6. `OWNER_EMAIL` có thể để trống; hệ thống mặc định dùng email của tài khoản deploy.
+7. Deploy Web App và kiểm tra `?action=health`. Chạy lại `setupBookingSpreadsheet()` khi nâng cấp để append cột `Payment Mode` mà không xóa dữ liệu cũ.
+8. Tạo booking synthetic và xác nhận đủ cột, số tiền, email/log.
 
 ## 4. Frontend staging
 
@@ -41,7 +44,17 @@
 8. Kiểm tra CSP console, asset 404 và CORS.
 9. Test landing → booking → payment → manual confirm trên mobile và desktop.
 
-## 5. Production
+## 5. SePay webhook (chỉ khi `PAYMENT_MODE=sepay`)
+
+1. Trong Vercel đặt `SEPAY_API_KEY` và `PAYMENT_WEBHOOK_SECRET`; `PAYMENT_WEBHOOK_SECRET` phải trùng Script Property của Booking/Payment Apps Script. Redeploy sau khi đổi biến.
+2. Trong SePay tạo webhook URL `https://<domain>/api/sepay-webhook`, sự kiện **Có tiền vào**, content type **JSON**, xác thực **API Key**. Giá trị API Key phải trùng `SEPAY_API_KEY` trong Vercel.
+3. Cấu hình tiền tố mã thanh toán `CCP`; mã đơn mới có dạng `CCP` + 10 ký tự để phù hợp nội dung chuyển khoản. Backend vẫn đọc được mã đơn dài của release cũ.
+4. Dùng Test Mode/Gửi thử của SePay với booking synthetic: sai account hoặc sai amount phải bị từ chối; payload gửi lại cùng `id` không được ghi nhận hai lần; đúng amount và mã đơn phải chuyển `PENDING_PAYMENT`/`PAYMENT_REVIEW` sang `PAID`.
+5. Chỉ bật `paymentEnabled` sau khi kiểm thử end-to-end, health báo `paymentConfigured=true`, `paymentMode=sepay`, `sepayConfigured=true`.
+
+QR VietQR tải từ `img.vietqr.io` và chứa mã ngân hàng, số tài khoản, tên tài khoản, số tiền, nội dung chuyển khoản. Đây không phải secret nhưng là egress tới nhà cung cấp QR; cần đưa domain này vào đánh giá/network log của môi trường production.
+
+## 6. Production
 
 1. Tạo hai Spreadsheet và hai deployment production mới; không dùng lại staging.
 2. Deploy Content/Admin, chạy health; deploy Booking/Payment, chạy health.
@@ -49,7 +62,7 @@
 4. Smoke test một booking được đánh dấu rõ là test và xử lý theo quy trình dữ liệu thử.
 5. Theo dõi `Audit Log`, `Email Log`, `Error Log` ngay sau deploy và sau 24 giờ.
 
-## 6. Rollback
+## 7. Rollback
 
 1. Tắt/giữ `paymentEnabled: false` nếu liên quan giao dịch.
 2. Trả frontend về release trước.

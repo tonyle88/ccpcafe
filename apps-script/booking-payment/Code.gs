@@ -1,4 +1,4 @@
-const BOOKING_HEADERS = ['Created At','Customer Name','Phone','Email','Package Code','Package Name','Preferred Date','Party Size','Topic','Order ID','Base Amount','Discount Amount','Final Amount','Currency','Status','Transfer Content','Payment Transaction ID','Paid Amount','Paid At','Owner Email','Idempotency Key','Last Updated At'];
+const BOOKING_HEADERS = ['Created At','Customer Name','Phone','Email','Package Code','Package Name','Preferred Date','Party Size','Topic','Order ID','Base Amount','Discount Amount','Final Amount','Currency','Status','Transfer Content','Payment Transaction ID','Paid Amount','Paid At','Owner Email','Idempotency Key','Last Updated At','Payment Mode'];
 const BOOKING_SHEETS = { 'Bookings':BOOKING_HEADERS, 'Email Log':['Timestamp','Type','Recipient','Order ID','Status','Message'], 'Error Log':['Timestamp','Source','Action','Order ID','Message'] };
 const PACKAGE_CATALOG = Object.freeze({ 'kham-pha':{name:'Gói Khám Phá',price:300000}, 'ket-noi':{name:'Gói Kết Nối',price:400000}, 'toan-dien':{name:'Gói Toàn Diện',price:550000}, '3in1':{name:'Tư Vấn 3-in-1 Đặc Biệt',price:550000} });
 
@@ -27,15 +27,23 @@ function register_(data) {
   const clean=validateBooking_(data), pkg=PACKAGE_CATALOG[clean.packageCode];
   const lock=LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    const sheet=getBookingSpreadsheet_().getSheetByName('Bookings');
+    const spreadsheet=getBookingSpreadsheet_();
+    bookingEnsureSheet_(spreadsheet,'Bookings',BOOKING_HEADERS);
+    const sheet=spreadsheet.getSheetByName('Bookings');
     const existing=findBooking_('Idempotency Key',clean.idempotencyKey);
     if(existing) return publicOrder_(existing);
     const discountRate=clean.partySize===2?0.10:(clean.partySize>=3?0.15:0);
     const discount=Math.round(pkg.price*discountRate), finalAmount=pkg.price-discount;
-    const orderId='CCP-'+Utilities.formatDate(new Date(),'Asia/Ho_Chi_Minh','yyyyMMdd')+'-'+Utilities.getUuid().replace(/-/g,'').toUpperCase();
-    const ownerEmail=PropertiesService.getScriptProperties().getProperty('OWNER_EMAIL')||Session.getEffectiveUser().getEmail()||'';
-    const row=[new Date(),clean.name,clean.phone,clean.email,clean.packageCode,pkg.name,clean.preferredDate,clean.partySize,clean.topic,orderId,pkg.price,discount,finalAmount,'VND','PENDING_PAYMENT',orderId,'','', '',ownerEmail,clean.idempotencyKey,new Date()];
-    sheet.appendRow(row);
+    const orderId=createOrderId_();
+    const properties=PropertiesService.getScriptProperties(), ownerEmail=properties.getProperty('OWNER_EMAIL')||Session.getEffectiveUser().getEmail()||'';
+    const paymentMode=paymentMode_(properties);
+    const record={
+      'Created At':new Date(),'Customer Name':clean.name,'Phone':clean.phone,'Email':clean.email,'Package Code':clean.packageCode,'Package Name':pkg.name,
+      'Preferred Date':clean.preferredDate,'Party Size':clean.partySize,'Topic':clean.topic,'Order ID':orderId,'Base Amount':pkg.price,'Discount Amount':discount,
+      'Final Amount':finalAmount,'Currency':'VND','Status':'PENDING_PAYMENT','Transfer Content':orderId,'Payment Transaction ID':'','Paid Amount':'','Paid At':'',
+      'Owner Email':ownerEmail,'Idempotency Key':clean.idempotencyKey,'Last Updated At':new Date(),'Payment Mode':paymentMode
+    };
+    sheet.appendRow(BOOKING_HEADERS.map(header=>record[header]));
     sendBookingEmails_(clean,pkg,orderId,finalAmount,ownerEmail);
     return { orderId:orderId, amount:finalAmount, currency:'VND', status:'PENDING_PAYMENT', paymentUrl:'payment.html?orderId='+encodeURIComponent(orderId) };
   } finally { lock.releaseLock(); }
@@ -55,7 +63,15 @@ function validateBooking_(data) {
   return clean;
 }
 
-function normalizeOrderId_(value) { const orderId=String(value||'').trim().toUpperCase(); if(!/^CCP-[0-9]{8}-[A-F0-9]{32}$/.test(orderId)) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.'); return orderId; }
+function createOrderId_() {
+  for(let attempt=0;attempt<5;attempt++) {
+    const suffix=Utilities.formatDate(new Date(),'Asia/Ho_Chi_Minh','yyMMdd')+Utilities.getUuid().replace(/-/g,'').slice(0,4).toUpperCase();
+    const orderId='CCP'+suffix;
+    if(!findBooking_('Order ID',orderId)) return orderId;
+  }
+  throw bookingError_('INTERNAL_ERROR','Không thể tạo mã đơn duy nhất.');
+}
+function normalizeOrderId_(value) { const orderId=String(value||'').trim().toUpperCase(); if(!/^CCP[0-9]{6}[A-F0-9]{4}$/.test(orderId)&&!/^CCP-[0-9]{8}-[A-F0-9]{32}$/.test(orderId)) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.'); return orderId; }
 function checkPayment_(orderId) { const row=findBooking_('Order ID',normalizeOrderId_(orderId)); if(!row) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.'); return publicOrder_(row); }
 function manualConfirm_(data) {
   const orderId=normalizeOrderId_(data.orderId), lock=LockService.getScriptLock(); lock.waitLock(10000);
@@ -64,21 +80,58 @@ function manualConfirm_(data) {
     if(!row) throw bookingError_('ORDER_NOT_FOUND','Không tìm thấy đơn.');
     const current=String(row.object.Status||'');
     if(current==='PENDING_PAYMENT') {
-      row.sheet.getRange(row.rowNumber,BOOKING_HEADERS.indexOf('Status')+1).setValue('PAYMENT_REVIEW');
-      row.sheet.getRange(row.rowNumber,BOOKING_HEADERS.indexOf('Last Updated At')+1).setValue(new Date());
+      setBookingFields_(row,{'Status':'PAYMENT_REVIEW','Last Updated At':new Date()});
       return {orderId:orderId,status:'PAYMENT_REVIEW'};
     }
     if(['PAYMENT_REVIEW','PAID','CONFIRMED','COMPLETED'].includes(current)) return {orderId:orderId,status:current};
     throw bookingError_('INVALID_STATE','Đơn không thể chuyển sang chờ đối soát.');
   } finally { lock.releaseLock(); }
 }
-function paymentWebhook_(data,signature) { const secret=PropertiesService.getScriptProperties().getProperty('PAYMENT_WEBHOOK_SECRET'); if(!secret||signature!==secret) throw bookingError_('FORBIDDEN','Webhook không hợp lệ.'); throw bookingError_('NOT_IMPLEMENTED','Cần tích hợp chữ ký theo nhà cung cấp thanh toán đã chọn.'); }
-function publicOrder_(record) { const row=record.object||record, properties=PropertiesService.getScriptProperties(); return { orderId:row['Order ID'], packageName:row['Package Name'], amount:Number(row['Final Amount']), currency:row.Currency, status:row.Status, transferContent:row['Transfer Content'], payment:{ bankName:properties.getProperty('PAYMENT_BANK_NAME')||'', accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'', accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'' } }; }
-function findBooking_(header,value,withMeta) { const sheet=getBookingSpreadsheet_().getSheetByName('Bookings'); if(!sheet||sheet.getLastRow()<2)return null; const values=sheet.getDataRange().getValues(), headers=values.shift(), index=headers.indexOf(header); for(let i=0;i<values.length;i++)if(String(values[i][index])===value){const object=headers.reduce((o,k,j)=>(o[k]=values[i][j],o),{});return withMeta?{object:object,sheet:sheet,rowNumber:i+2}:object;} return null; }
+
+function paymentWebhook_(data,signature) {
+  const properties=PropertiesService.getScriptProperties(), secret=properties.getProperty('PAYMENT_WEBHOOK_SECRET');
+  if(!secret||signature!==secret) throw bookingError_('FORBIDDEN','Webhook không hợp lệ.');
+  if(paymentMode_(properties)!=='sepay') throw bookingError_('INVALID_STATE','Đối soát SePay chưa được bật.');
+  if(String(data.transferType||'').toLowerCase()!=='in') return {success:true,ignored:true};
+  const transactionId=String(data.id||data.referenceCode||'').trim();
+  if(!transactionId) throw bookingError_('VALIDATION_ERROR','Webhook thiếu mã giao dịch.');
+  const duplicate=findBooking_('Payment Transaction ID',transactionId);
+  if(duplicate) return {success:true,duplicate:true,orderId:duplicate['Order ID']};
+  const text=[data.code,data.content,data.description].map(value=>String(value||'').toUpperCase()).join(' ');
+  const match=text.match(/CCP[0-9]{6}[A-F0-9]{4}|CCP-[0-9]{8}-[A-F0-9]{32}/);
+  if(!match) return {success:true,ignored:true};
+  const orderId=normalizeOrderId_(match[0]), lock=LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const row=findBooking_('Order ID',orderId,true);
+    if(!row) return {success:true,ignored:true};
+    if(findBooking_('Payment Transaction ID',transactionId)) return {success:true,duplicate:true,orderId:orderId};
+    const expectedAccount=String(properties.getProperty('PAYMENT_ACCOUNT_NO')||'').replace(/\s/g,''), actualAccount=String(data.accountNumber||'').replace(/\s/g,'');
+    const paidAmount=Number(data.transferAmount);
+    if(expectedAccount&&actualAccount&&expectedAccount!==actualAccount) throw bookingError_('PAYMENT_MISMATCH','Tài khoản nhận không khớp.');
+    if(!Number.isFinite(paidAmount)||paidAmount!==Number(row.object['Final Amount'])) throw bookingError_('PAYMENT_MISMATCH','Số tiền thanh toán không khớp.');
+    const current=String(row.object.Status||'');
+    if(['CANCELLED','EXPIRED'].includes(current)) throw bookingError_('INVALID_STATE','Đơn đã kết thúc.');
+    if(!['PENDING_PAYMENT','PAYMENT_REVIEW','PAID','CONFIRMED','COMPLETED'].includes(current)) throw bookingError_('INVALID_STATE','Trạng thái đơn không hợp lệ.');
+    if(!['PAID','CONFIRMED','COMPLETED'].includes(current)) setBookingFields_(row,{'Status':'PAID','Payment Transaction ID':transactionId,'Paid Amount':paidAmount,'Paid At':parseSePayDate_(data.transactionDate),'Last Updated At':new Date()});
+    return {success:true,orderId:orderId,status:'PAID'};
+  } finally { lock.releaseLock(); }
+}
+
+function parseSePayDate_(value) { const text=String(value||'').trim(); if(!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) return new Date(); const parsed=new Date(text.replace(' ','T')+'+07:00'); return isNaN(parsed.getTime())?new Date():parsed; }
+function paymentMode_(properties) { return String(properties.getProperty('PAYMENT_MODE')||'manual').toLowerCase()==='sepay'?'sepay':'manual'; }
+function paymentQrUrl_(row,properties) {
+  const bankCode=String(properties.getProperty('PAYMENT_BANK_CODE')||'').trim(), accountNo=String(properties.getProperty('PAYMENT_ACCOUNT_NO')||'').replace(/\s/g,'');
+  if(!bankCode||!accountNo) return '';
+  const base='https://img.vietqr.io/image/'+encodeURIComponent(bankCode)+'-'+encodeURIComponent(accountNo)+'-compact2.png';
+  return base+'?amount='+encodeURIComponent(Number(row['Final Amount']))+'&addInfo='+encodeURIComponent(row['Transfer Content'])+'&accountName='+encodeURIComponent(properties.getProperty('PAYMENT_ACCOUNT_NAME')||'');
+}
+function publicOrder_(record) { const row=record.object||record, properties=PropertiesService.getScriptProperties(), mode=String(row['Payment Mode']||paymentMode_(properties)); return { orderId:row['Order ID'], packageName:row['Package Name'], amount:Number(row['Final Amount']), currency:row.Currency, status:row.Status, transferContent:row['Transfer Content'], payment:{ mode:mode, qrUrl:paymentQrUrl_(row,properties), bankName:properties.getProperty('PAYMENT_BANK_NAME')||'', accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'', accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'' } }; }
+function findBooking_(header,value,withMeta) { const sheet=getBookingSpreadsheet_().getSheetByName('Bookings'); if(!sheet||sheet.getLastRow()<2)return null; const values=sheet.getDataRange().getValues(), headers=values.shift(), index=headers.indexOf(header); if(index<0)return null; for(let i=0;i<values.length;i++)if(String(values[i][index])===String(value)){const object=headers.reduce((o,k,j)=>(o[k]=values[i][j],o),{});return withMeta?{object:object,sheet:sheet,rowNumber:i+2,headers:headers}:object;} return null; }
+function setBookingFields_(record,updates) { const headers=record.headers||BOOKING_HEADERS; Object.keys(updates).forEach(header=>{const index=headers.indexOf(header);if(index>=0){record.sheet.getRange(record.rowNumber,index+1).setValue(updates[header]);record.object[header]=updates[header];}}); }
 function sendBookingEmails_(clean,pkg,orderId,amount,ownerEmail) { try { const subject='Xác nhận đăng ký '+orderId, body='Chào '+clean.name+',\n\nĐăng ký '+pkg.name+' đã được ghi nhận.\nMã đơn: '+orderId+'\nSố tiền: '+amount.toLocaleString('vi-VN')+' VND.\n\nClow Cat Patronus'; MailApp.sendEmail(clean.email,subject,body); logEmail_('customer',clean.email,orderId,'success',''); if(ownerEmail){MailApp.sendEmail(ownerEmail,'Booking mới '+orderId,'Khách: '+clean.name+'\nGói: '+pkg.name+'\nMã đơn: '+orderId);logEmail_('owner',ownerEmail,orderId,'success','');} } catch(error) { logEmail_('booking','',orderId,'error',bookingSafe_(error)); } }
-function bookingHealth_() { const ss=getBookingSpreadsheet_(), properties=PropertiesService.getScriptProperties(); const checks=Object.keys(BOOKING_SHEETS).map(name=>({name:name,ok:!!ss.getSheetByName(name)})); const paymentConfigured=['PAYMENT_BANK_NAME','PAYMENT_ACCOUNT_NAME','PAYMENT_ACCOUNT_NO'].every(key=>!!properties.getProperty(key)); return {service:'booking-payment',ok:checks.every(c=>c.ok)&&paymentConfigured,checks:checks,emailConfigured:!!(properties.getProperty('OWNER_EMAIL')||Session.getEffectiveUser().getEmail()),paymentConfigured:paymentConfigured,timestamp:new Date().toISOString()}; }
+function bookingHealth_() { const ss=getBookingSpreadsheet_(), properties=PropertiesService.getScriptProperties(), mode=paymentMode_(properties); const checks=Object.keys(BOOKING_SHEETS).map(name=>({name:name,ok:!!ss.getSheetByName(name)})); const paymentConfigured=['PAYMENT_BANK_CODE','PAYMENT_BANK_NAME','PAYMENT_ACCOUNT_NAME','PAYMENT_ACCOUNT_NO'].every(key=>!!properties.getProperty(key)); const sepayConfigured=mode!=='sepay'||!!properties.getProperty('PAYMENT_WEBHOOK_SECRET'); return {service:'booking-payment',ok:checks.every(c=>c.ok)&&paymentConfigured&&sepayConfigured,checks:checks,emailConfigured:!!(properties.getProperty('OWNER_EMAIL')||Session.getEffectiveUser().getEmail()),paymentConfigured:paymentConfigured,paymentMode:mode,sepayConfigured:sepayConfigured,timestamp:new Date().toISOString()}; }
 function getBookingSpreadsheet_(){const id=PropertiesService.getScriptProperties().getProperty('BOOKING_SPREADSHEET_ID');if(id)return SpreadsheetApp.openById(id);const active=SpreadsheetApp.getActiveSpreadsheet();if(!active)throw bookingError_('CONFIG_ERROR','Thiếu BOOKING_SPREADSHEET_ID trong Script Properties.');return active;}
-function bookingEnsureSheet_(ss,name,headers){const sheet=ss.getSheetByName(name)||ss.insertSheet(name);if(sheet.getLastRow()===0)sheet.getRange(1,1,1,headers.length).setValues([headers]);}
+function bookingEnsureSheet_(ss,name,headers){const sheet=ss.getSheetByName(name)||ss.insertSheet(name);if(sheet.getLastRow()===0){sheet.getRange(1,1,1,headers.length).setValues([headers]);return;}const existing=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(String),missing=headers.filter(header=>existing.indexOf(header)<0);if(missing.length)sheet.getRange(1,existing.length+1,1,missing.length).setValues([missing]);}
 function logEmail_(type,recipient,orderId,status,message){getBookingSpreadsheet_().getSheetByName('Email Log').appendRow([new Date(),type,recipient,orderId,status,String(message).slice(0,200)]);}
 function logError_(source,action,orderId,message){try{const sheet=getBookingSpreadsheet_().getSheetByName('Error Log');if(sheet)sheet.appendRow([new Date(),source,action,orderId,String(message).slice(0,200)]);}catch(_) {}}
 function bookingError_(code,message){const error=new Error(message);error.code=code;return error;}

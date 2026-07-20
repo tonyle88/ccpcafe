@@ -7,7 +7,9 @@ const elements = {
   pkg: document.getElementById('package-name'), amount: document.getElementById('amount'),
   transfer: document.getElementById('transfer-content'), status: document.getElementById('payment-status'),
   confirm: document.getElementById('manual-confirm'), bank: document.getElementById('bank-name'),
-  accountName: document.getElementById('account-name'), accountNo: document.getElementById('account-no')
+  accountName: document.getElementById('account-name'), accountNo: document.getElementById('account-no'),
+  qr: document.getElementById('payment-qr'), qrUnavailable: document.getElementById('qr-unavailable'),
+  mode: document.getElementById('payment-mode'), modeHelp: document.getElementById('mode-help'), copy: document.getElementById('copy-transfer')
 };
 const SUCCESS_STATUSES = new Set(['PAID', 'CONFIRMED', 'COMPLETED']);
 const STOP_STATUSES = new Set([...SUCCESS_STATUSES, 'CANCELLED', 'EXPIRED']);
@@ -58,9 +60,18 @@ function render(order) {
   elements.amount.textContent = formatVnd(order.amount);
   elements.transfer.textContent = order.transferContent;
   elements.status.textContent = order.status;
+  const sepayMode = order.payment?.mode === 'sepay';
+  elements.mode.textContent = sepayMode ? 'SePay · tự động xác nhận' : 'Chuyển khoản · đối soát thủ công';
+  elements.modeHelp.textContent = sepayMode
+    ? 'Sau khi chuyển khoản đúng số tiền và nội dung, hệ thống sẽ tự cập nhật trong ít phút. Nút bên dưới là phương án yêu cầu kiểm tra thủ công khi cần.'
+    : 'Sau khi chuyển khoản, nhấn nút bên dưới để đội vận hành kiểm tra và xác nhận.';
   elements.bank.textContent = order.payment?.bankName || 'Chưa cấu hình ngân hàng';
   elements.accountName.textContent = order.payment?.accountName || '';
   elements.accountNo.textContent = order.payment?.accountNo || '';
+  const qrUrl = order.payment?.qrUrl || '';
+  elements.qr.hidden = !qrUrl;
+  elements.qrUnavailable.hidden = Boolean(qrUrl);
+  if (qrUrl && elements.qr.src !== qrUrl) elements.qr.src = qrUrl;
   const reviewing = order.status === 'PAYMENT_REVIEW';
   elements.confirm.disabled = reviewing || STOP_STATUSES.has(order.status);
   if (reviewing) elements.confirm.textContent = 'Đang chờ đối soát';
@@ -102,6 +113,21 @@ elements.confirm.addEventListener('click', async () => {
     elements.error.textContent = error.message;
     elements.confirm.disabled = false;
   }
+});
+
+elements.copy.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(elements.transfer.textContent);
+    elements.copy.textContent = 'Đã sao chép';
+    setTimeout(() => { elements.copy.textContent = 'Sao chép'; }, 1800);
+  } catch (_) {
+    elements.error.textContent = 'Không thể sao chép tự động. Hãy chọn và sao chép mã đơn thủ công.';
+  }
+});
+
+elements.qr.addEventListener('error', () => {
+  elements.qr.hidden = true;
+  elements.qrUnavailable.hidden = false;
 });
 
 document.addEventListener('visibilitychange', () => {

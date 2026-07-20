@@ -197,6 +197,20 @@ function saveRow_(sheetName, data, session) {
 }
 
 function validateManagedRow_(sheetName, data) {
+  if (sheetName === 'Content') {
+    const type = String(data.Type || 'text').trim().toLowerCase();
+    const selector = String(data.Selector || '').trim();
+    const attribute = String(data.Attribute || '').trim().toLowerCase();
+    const value = String(data.Value || '');
+    if (!selector || selector.length > 200 || /[{};]/.test(selector)) throw appError_('VALIDATION_ERROR', 'Selector nội dung không hợp lệ.');
+    if (!['text','attribute'].includes(type)) throw appError_('VALIDATION_ERROR', 'Content type chỉ hỗ trợ text hoặc attribute.');
+    if (value.length > 5000) throw appError_('VALIDATION_ERROR', 'Nội dung vượt quá 5.000 ký tự.');
+    if (type === 'text' && attribute) throw appError_('VALIDATION_ERROR', 'Content text không được đặt Attribute.');
+    if (type === 'attribute') {
+      if (!['alt','aria-label','href','src','title'].includes(attribute)) throw appError_('VALIDATION_ERROR', 'Attribute không nằm trong allowlist.');
+      if ((attribute === 'href' || attribute === 'src') && !isSafeManagedUrl_(value)) throw appError_('VALIDATION_ERROR', 'URL nội dung không an toàn.');
+    }
+  }
   if (sheetName === 'Navigation') {
     const href = String(data.Href || '').trim();
     const isInternalPath = href.startsWith('/') && !href.startsWith('//');
@@ -209,6 +223,8 @@ function validateManagedRow_(sheetName, data) {
     if (!Number.isInteger(order) || order < 0 || order > 999) throw appError_('VALIDATION_ERROR', 'Thứ tự phải là số nguyên từ 0 đến 999.');
   }
 }
+
+function isSafeManagedUrl_(value) { const url=String(value||'').trim(); return url.startsWith('#') || (url.startsWith('/')&&!url.startsWith('//')) || /^https:\/\//i.test(url) || /^[a-z0-9][a-z0-9._\/-]*$/i.test(url); }
 
 function health_() {
   const spreadsheet = getContentSpreadsheet_();

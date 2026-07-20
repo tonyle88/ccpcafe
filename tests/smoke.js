@@ -11,6 +11,7 @@ const bookingBackend=read('apps-script/booking-payment/Code.gs');packages.forEac
 ['normalizeOrderId_','INVALID_STATE','Last Updated At'].forEach(term=>assert(bookingBackend.includes(term),`Booking backend thiếu contract ${term}`));
 const contentBackend=read('apps-script/content-admin/Code.gs');['saveNavigation','saveSection','saveUser'].forEach(action=>assert(contentBackend.includes(`body.action === '${action}'`),`Content backend thiếu action ${action}`));
 assert(contentBackend.includes("!/^https:\\/\\//i.test(href)"),'Navigation phải chặn URL không an toàn');
+['Content type chỉ hỗ trợ text hoặc attribute','Attribute không nằm trong allowlist','URL nội dung không an toàn'].forEach(message=>assert(contentBackend.includes(message),`Content validation thiếu: ${message}`));
 assert(contentBackend.includes("requireSession_(body.token, ['admin'])"),'API user phải chỉ cho admin');
 ['Bạn không thể tự hạ quyền','Phải giữ ít nhất một admin'].forEach(message=>assert(contentBackend.includes(message),`User guard thiếu: ${message}`));
 ['contentPublic_','navigationPublic_','sectionPublic_'].forEach(mapper=>assert(contentBackend.includes(`.map(${mapper})`),`Public API thiếu allowlist mapper ${mapper}`));
@@ -19,6 +20,7 @@ assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v2'"),'Pub
 assert(contentBackend.includes('script\\.google\\.com|script\\.googleusercontent\\.com'),'Booking health endpoint phải giới hạn Google Apps Script');
 const adminHtml=read('admin/index.html');['navigation-panel','sections-panel','users-panel'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thiếu panel ${id}`));
 const adminScript=read('admin/app.js');assert(adminScript.includes("await api('saveUser', record)"),'Admin UI thiếu lưu user');assert(!adminScript.includes('Password Hash'),'Admin UI không được đọc hoặc hiển thị password hash');
+['renderContentRecords','createContentEditor','Preview an toàn'].forEach(term=>assert(adminScript.includes(term),`Content editor thiếu ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
 const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));

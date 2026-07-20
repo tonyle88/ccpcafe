@@ -17,7 +17,7 @@ function getPackage(code) {
 
 function isSafePublicUrl(value) {
   const url = String(value || '').trim();
-  return url.startsWith('#') || (url.startsWith('/') && !url.startsWith('//')) || /^https:\/\//i.test(url);
+  return url.startsWith('#') || (url.startsWith('/') && !url.startsWith('//')) || /^https:\/\//i.test(url) || /^[a-z0-9][a-z0-9._\/-]*$/i.test(url);
 }
 
 function renderContent() {

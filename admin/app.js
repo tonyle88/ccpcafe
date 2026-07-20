@@ -64,11 +64,59 @@ function field(label, value, onChange, type = 'text', readOnly = false) {
 }
 
 const recordViews = {
-  content: { idKey:'Key', action:'saveContent', fields:[['Value','textarea']] },
   package: { idKey:'Code', action:'savePackage', fields:[['Name','text'],['Price','number'],['Duration','number'],['Enabled','checkbox']] },
   navigation: { idKey:'Key', action:'saveNavigation', fields:[['Label','text'],['Href','text'],['Order','number'],['Enabled','checkbox']] },
   section: { idKey:'Section Key', action:'saveSection', fields:[['Order','number'],['Visible','checkbox']] }
 };
+
+function renderContentRecords(records) {
+  const root = $('content-list');
+  root.replaceChildren();
+  if (!records.length) {
+    const empty = document.createElement('p'); empty.className = 'empty-state'; empty.textContent = 'Chưa có nội dung. Hãy chạy setup Content Spreadsheet.'; root.appendChild(empty); return;
+  }
+  const groups = records.reduce((result, record) => {
+    const section = String(record.Section || 'Khác');
+    (result[section] ||= []).push(record);
+    return result;
+  }, {});
+  Object.entries(groups).forEach(([section, sectionRecords]) => {
+    const group = document.createElement('section'); group.className = 'content-group';
+    const heading = document.createElement('h3'); heading.textContent = section; group.appendChild(heading);
+    sectionRecords.forEach(original => group.appendChild(createContentEditor(original)));
+    root.appendChild(group);
+  });
+}
+
+function createContentEditor(original) {
+  const record = { ...original };
+  const card = document.createElement('article'); card.className = 'content-editor';
+  const header = document.createElement('div'); header.className = 'content-editor-header';
+  const title = document.createElement('strong'); title.textContent = record.Key;
+  const description = document.createElement('span'); description.textContent = record.Description || 'Không có mô tả';
+  header.append(title, description); card.appendChild(header);
+  const metadata = document.createElement('p'); metadata.className = 'content-metadata';
+  [record.Selector, record.Type || 'text', record.Attribute].filter(Boolean).forEach(value => { const chip=document.createElement('code'); chip.textContent=value; metadata.appendChild(chip); });
+  card.appendChild(metadata);
+  const editor = field('Giá trị', record.Value, value => { record.Value = value; preview.textContent = value; }, 'textarea');
+  editor.className = 'content-value'; card.appendChild(editor);
+  card.appendChild(field('Hiển thị', record.Enabled, value => { record.Enabled = value; }, 'checkbox'));
+  const previewWrap = document.createElement('div'); previewWrap.className = 'content-preview';
+  const previewLabel = document.createElement('small'); previewLabel.textContent = 'Preview an toàn';
+  const preview = document.createElement('p'); preview.textContent = record.Value || '—';
+  previewWrap.append(previewLabel, preview); card.appendChild(previewWrap);
+  const save = document.createElement('button'); save.textContent = 'Lưu nội dung';
+  save.addEventListener('click', async () => {
+    save.disabled = true;
+    try {
+      if (String(record.Value || '').length > 5000) throw new Error('Nội dung vượt quá 5.000 ký tự.');
+      await api('saveContent', record); notify('✦ Đã lưu nội dung'); await loadAdmin();
+    } catch (error) { notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true); }
+    finally { save.disabled = false; }
+  });
+  card.appendChild(save);
+  return card;
+}
 
 function renderRecords(targetId, records, kind) {
   const root = $(targetId);
@@ -158,7 +206,7 @@ function render() {
   $('logout').hidden = false;
   $('identity').textContent = `${state.data.session.displayName || state.data.session.username} · ${state.data.session.role}`;
   renderHealthOverview();
-  renderRecords('content-list', state.data.content || [], 'content');
+  renderContentRecords(state.data.content || []);
   renderRecords('package-list', state.data.packages || [], 'package');
   renderRecords('navigation-list', state.data.navigation || [], 'navigation');
   renderRecords('section-list', state.data.sections || [], 'section');

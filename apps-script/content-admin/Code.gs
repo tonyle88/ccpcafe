@@ -124,18 +124,23 @@ function adminInit_(session) {
   const data = { session: session, health:{content:health_(),booking:bookingRemoteHealth_()}, operations:operationsSummary_(spreadsheet,session), content: rowsAsObjects_(spreadsheet.getSheetByName('Content')), packages: rowsAsObjects_(spreadsheet.getSheetByName('Service Packages')), navigation: rowsAsObjects_(spreadsheet.getSheetByName('Navigation')), sections: rowsAsObjects_(spreadsheet.getSheetByName('Section Order')) };
   if (session.role === 'admin') {
     data.users = rowsAsObjects_(spreadsheet.getSheetByName('Admin Users')).map(user => ({ Username:user.Username, Role:user.Role, Status:user.Status, 'Display Name':user['Display Name'], 'Last Login':user['Last Login'] }));
-    data.configuration = { bookingWebAppUrl:String(PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL') || ''), payment:bookingAdminRequest_('getPaymentConfig',{}) };
+    const properties=PropertiesService.getScriptProperties();
+    data.configuration = { bookingWebAppUrl:String(properties.getProperty('BOOKING_WEB_APP_URL') || ''), bookingAdminSecretConfigured:String(properties.getProperty('BOOKING_ADMIN_SECRET')||'').length>=32, payment:bookingAdminRequest_('getPaymentConfig',{}) };
   }
   return data;
 }
 
 function saveBookingConfig_(data, session) {
   const endpoint = String(data.bookingWebAppUrl || '').trim();
+  const adminSecret = String(data.bookingAdminSecret || '');
   if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec(?:\?.*)?$/i.test(endpoint)) throw appError_('VALIDATION_ERROR', 'URL Booking Script phải là Web App URL script.google.com kết thúc bằng /exec.');
-  PropertiesService.getScriptProperties().setProperty('BOOKING_WEB_APP_URL', endpoint);
+  if(adminSecret&&adminSecret.length<32) throw appError_('VALIDATION_ERROR','BOOKING_ADMIN_SECRET phải có tối thiểu 32 ký tự.');
+  const properties=PropertiesService.getScriptProperties();
+  properties.setProperty('BOOKING_WEB_APP_URL', endpoint);
+  if(adminSecret) properties.setProperty('BOOKING_ADMIN_SECRET',adminSecret);
   CacheService.getScriptCache().remove(PUBLIC_CACHE_KEY);
   audit_('save','success',session.username,session.role,'configuration','booking-web-app','','Đã cập nhật Booking Web App URL');
-  return { saved:true, health:bookingRemoteHealth_() };
+  return { saved:true, adminSecretConfigured:String(properties.getProperty('BOOKING_ADMIN_SECRET')||'').length>=32, health:bookingRemoteHealth_() };
 }
 
 function savePaymentConfigRemote_(data, session) {

@@ -33,7 +33,9 @@ const adminScript=read('admin/app.js');assert(adminScript.includes("await api('s
 ['switch-button','order-button','Đã cập nhật thứ tự hiển thị'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu điều khiển ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
 ['payment-tab','payment-config-form','payment-bank-code','payment-webhook-status'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thanh toán thiếu ${id}`));
+['payment-connection-form','payment-booking-web-app-url','payment-booking-admin-secret'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin kết nối thanh toán thiếu ${id}`));
 ['renderPaymentConfig',"api('savePaymentConfig'",'paymentMode'].forEach(term=>assert(adminScript.includes(term)||contentBackend.includes(term),`Admin thanh toán thiếu contract ${term}`));
+assert(adminScript.includes("api('saveBookingConfig',{bookingWebAppUrl,bookingAdminSecret})"),'Admin phải lưu được URL và secret dạng write-only');
 ['getPaymentConfig','savePaymentConfig','BOOKING_ADMIN_SECRET'].forEach(term=>assert(bookingBackend.includes(term),`Booking admin config thiếu ${term}`));
 assert(contentBackend.includes("body.action === 'savePaymentConfig'")&&contentBackend.includes('bookingAdminRequest_'),'Content admin phải chuyển cấu hình thanh toán sang Booking Script');
 const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));

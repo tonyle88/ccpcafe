@@ -141,8 +141,7 @@ function saveBookingConfig_(data, session) {
 }
 
 function savePaymentConfig_(data, session) {
-  const clean={mode:String(data.mode||'manual').trim().toLowerCase(),bankCode:String(data.bankCode||'').trim(),bankName:String(data.bankName||'').trim(),accountName:String(data.accountName||'').trim(),accountNo:String(data.accountNo||'').replace(/\s/g,''),publicSiteUrl:String(data.publicSiteUrl||'').trim().replace(/\/$/,'')};
-  if(!['manual','sepay'].includes(clean.mode)) throw appError_('VALIDATION_ERROR','Phương thức thanh toán không hợp lệ.');
+  const clean={mode:'manual',bankCode:String(data.bankCode||'').trim(),bankName:String(data.bankName||'').trim(),accountName:String(data.accountName||'').trim(),accountNo:String(data.accountNo||'').replace(/\s/g,''),publicSiteUrl:String(data.publicSiteUrl||'').trim().replace(/\/$/,'')};
   if(!/^[A-Za-z0-9]{2,20}$/.test(clean.bankCode)) throw appError_('VALIDATION_ERROR','Mã ngân hàng VietQR không hợp lệ.');
   if(clean.bankName.length<2||clean.bankName.length>100||clean.accountName.length<2||clean.accountName.length>150) throw appError_('VALIDATION_ERROR','Tên ngân hàng hoặc chủ tài khoản không hợp lệ.');
   if(!/^[0-9]{5,30}$/.test(clean.accountNo)) throw appError_('VALIDATION_ERROR','Số tài khoản chỉ gồm 5–30 chữ số.');
@@ -153,7 +152,7 @@ function savePaymentConfig_(data, session) {
   return paymentConfig_();
 }
 
-function paymentConfig_() { const properties=PropertiesService.getScriptProperties(); return {configured:true,mode:String(properties.getProperty('PAYMENT_MODE')||'manual')==='sepay'?'sepay':'manual',bankCode:properties.getProperty('PAYMENT_BANK_CODE')||'',bankName:properties.getProperty('PAYMENT_BANK_NAME')||'',accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'',accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'',publicSiteUrl:properties.getProperty('PUBLIC_SITE_URL')||'',webhookConfigured:!!properties.getProperty('PAYMENT_WEBHOOK_SECRET')}; }
+function paymentConfig_() { const properties=PropertiesService.getScriptProperties(); return {configured:true,mode:'manual',bankCode:properties.getProperty('PAYMENT_BANK_CODE')||'',bankName:properties.getProperty('PAYMENT_BANK_NAME')||'',accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'',accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'',publicSiteUrl:properties.getProperty('PUBLIC_SITE_URL')||''}; }
 function paymentConfigWithFallback_() {
   const local=paymentConfig_(); if(local.bankCode&&local.accountNo)return local;
   const endpoint=String(PropertiesService.getScriptProperties().getProperty('BOOKING_WEB_APP_URL')||'').trim();

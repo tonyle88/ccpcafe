@@ -333,18 +333,12 @@ function render() {
 }
 
 function renderPaymentConfig(config) {
-  const mode=config.mode==='sepay'?'sepay':'manual';
-  document.querySelectorAll('input[name="payment-mode"]').forEach(input=>{input.checked=input.value===mode;});
   $('payment-bank-code').value=config.bankCode||'';
   $('payment-bank-name').value=config.bankName||'';
   $('payment-account-name').value=config.accountName||'';
   $('payment-account-no').value=config.accountNo||'';
   $('payment-public-site-url').value=config.publicSiteUrl||'';
-  $('payment-webhook-status').textContent=config.webhookConfigured?'Đã cấu hình ✓':'Chưa cấu hình';
-  $('payment-webhook-status').classList.toggle('is-ready',config.webhookConfigured===true);
-  $('payment-config-warning').textContent=mode==='sepay'&&!config.webhookConfigured
-    ? 'ⓘ Đang chọn SePay. Hãy bảo đảm SEPAY_API_KEY và PAYMENT_WEBHOOK_SECRET đã được cấu hình tại Vercel/Booking Script.'
-    : 'ⓘ Thông tin ngân hàng được lưu tại Content Admin và dùng trực tiếp để tạo QR trên trang thanh toán.';
+  $('payment-config-warning').textContent='ⓘ Thông tin ngân hàng được lưu tại Content Admin và dùng trực tiếp để tạo VietQR. Đối soát SePay đang tạm gác lại.';
 }
 
 function renderHealthOverview() {
@@ -446,12 +440,12 @@ $('save-booking-config').addEventListener('click', async event => {
 
 $('payment-config-form').addEventListener('submit', async event => {
   event.preventDefault();
-  const button=$('save-payment-config'), mode=document.querySelector('input[name="payment-mode"]:checked')?.value||'manual';
+  const button=$('save-payment-config'), mode='manual';
   button.disabled=true;
   try {
     const data={mode,bankCode:$('payment-bank-code').value.trim(),bankName:$('payment-bank-name').value.trim(),accountName:$('payment-account-name').value.trim(),accountNo:$('payment-account-no').value.replace(/\s/g,''),publicSiteUrl:$('payment-public-site-url').value.trim()};
     await api('savePaymentConfig',data);
-    notify(`✦ Đã lưu thanh toán ${mode==='sepay'?'SePay':'thủ công'}`);
+    notify('✦ Đã lưu thanh toán thủ công');
     await loadAdmin();
   } catch(error) { notify(`${error.message}${error.requestId?` · Mã ${error.requestId}`:''}`,true); }
   finally { button.disabled=false; }

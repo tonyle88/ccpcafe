@@ -88,10 +88,7 @@
         <div class="panel-heading"><div><span class="section-kicker">Đăng ký &amp; đối soát</span><h2>Cấu hình thanh toán</h2></div><p>Chọn cách xác nhận chuyển khoản và cập nhật thông tin tạo mã VietQR.</p></div>
         <div id="payment-config-warning" class="admin-hint"></div>
         <form id="payment-config-form" class="payment-config-layout">
-          <fieldset class="payment-mode-picker"><legend>Phương thức xác nhận thanh toán</legend>
-            <label class="payment-mode-option"><input type="radio" name="payment-mode" value="manual"><span><strong>Đối soát thủ công</strong><small>Khách quét QR, bấm đã chuyển khoản và quản trị viên kiểm tra giao dịch.</small></span></label>
-            <label class="payment-mode-option"><input type="radio" name="payment-mode" value="sepay"><span><strong>Tự động qua SePay</strong><small>Webhook tự xác nhận khi đúng mã đơn, tài khoản và số tiền.</small></span></label>
-          </fieldset>
+          <div class="payment-manual-summary"><span aria-hidden="true">✓</span><div><strong>Chuyển khoản &amp; đối soát thủ công</strong><small>Khách quét VietQR, bấm “Tôi đã chuyển khoản” và đội vận hành kiểm tra giao dịch.</small></div></div>
           <div class="payment-bank-fields">
             <label>Mã ngân hàng VietQR<input id="payment-bank-code" required maxlength="20" placeholder="Ví dụ: VCB, MB, ACB"></label>
             <label>Tên ngân hàng<input id="payment-bank-name" required maxlength="100" placeholder="Ví dụ: Vietcombank"></label>
@@ -99,7 +96,6 @@
             <label>Số tài khoản<input id="payment-account-no" required inputmode="numeric" maxlength="30" placeholder="Chỉ nhập chữ số"></label>
             <label class="payment-field-wide">Địa chỉ website<input id="payment-public-site-url" type="url" placeholder="https://domain-cua-ban.vn"></label>
           </div>
-          <div class="payment-security-status"><div><span>Webhook Apps Script</span><strong id="payment-webhook-status">Chưa kiểm tra</strong></div><p>API key SePay và các secret phải cấu hình trong Vercel/Script Properties. Admin chỉ hiển thị trạng thái, không đọc hoặc lưu secret trong trình duyệt.</p></div>
           <footer class="editor-actions"><button id="save-payment-config" class="button button-primary" type="submit">✦ Lưu cấu hình thanh toán</button></footer>
         </form>
       </section>

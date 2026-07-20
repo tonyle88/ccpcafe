@@ -24,9 +24,7 @@
 2. Chép file trong `apps-script/booking-payment/`.
 3. Trong Script Properties đặt `BOOKING_SPREADSHEET_ID`, `PAYMENT_BANK_CODE` (BIN hoặc mã ngân hàng VietQR), `PAYMENT_BANK_NAME`, `PAYMENT_ACCOUNT_NAME`, `PAYMENT_ACCOUNT_NO`. Không ghi các giá trị vào source. Các giá trị hiện có được Admin dùng làm dữ liệu gợi ý lần đầu; sau đó cấu hình public được quản lý tại Admin → Thanh toán.
 4. Chạy `setupBookingSpreadsheet()`.
-5. Chọn một trong hai chế độ:
-   - Không dùng SePay: đặt `PAYMENT_MODE=manual`; không cần webhook secret. Khách quét VietQR rồi bấm yêu cầu đối soát thủ công.
-   - Có SePay: đặt `PAYMENT_MODE=sepay` và tạo `PAYMENT_WEBHOOK_SECRET` ngẫu nhiên, dài tối thiểu 32 byte. Secret này phải trùng giá trị trong Vercel, không gửi cho SePay và không đưa vào Git.
+5. Giai đoạn hiện tại dùng đối soát thủ công: khách quét VietQR rồi bấm yêu cầu kiểm tra. SePay được tạm gác và không tham gia health check hay giao diện Admin.
 6. `OWNER_EMAIL` có thể để trống; hệ thống mặc định dùng email của tài khoản deploy. Đặt thêm `PUBLIC_SITE_URL=https://<domain>` để email xác nhận có nút quay lại trang thanh toán; không có dấu `/` cuối.
 7. Deploy Web App và kiểm tra `?action=health`. Chạy lại `setupBookingSpreadsheet()` khi nâng cấp để append cột `Payment Mode` mà không xóa dữ liệu cũ.
 8. Tạo booking synthetic và xác nhận đủ cột, số tiền, email/log.

@@ -32,7 +32,8 @@ const adminScript=read('admin/app.js');assert(adminScript.includes("await api('s
 ['Tên hiển thị trên trang chủ','sectionLabels','managed-row'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu ${term}`));
 ['switch-button','order-button','Đã cập nhật thứ tự hiển thị'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu điều khiển ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
-['payment-tab','payment-config-form','payment-bank-code','payment-webhook-status'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thanh toán thiếu ${id}`));
+['payment-tab','payment-config-form','payment-bank-code'].forEach(id=>assert(adminHtml.includes(`id="${id}"`),`Admin thanh toán thiếu ${id}`));
+assert(adminHtml.includes('Chuyển khoản &amp; đối soát thủ công')&&!adminHtml.includes('Tự động qua SePay'),'Admin hiện tại phải tập trung đối soát thủ công');
 ['renderPaymentConfig',"api('savePaymentConfig'",'paymentMode'].forEach(term=>assert(adminScript.includes(term)||contentBackend.includes(term),`Admin thanh toán thiếu contract ${term}`));
 assert(!adminHtml.includes('payment-connection-form')&&!adminHtml.includes('BOOKING_ADMIN_SECRET'),'Admin thanh toán không được yêu cầu kết nối Booking thừa');
 assert(bookingBackend.includes("action==='getPaymentConfig'")&&contentBackend.includes('paymentConfigWithFallback_'),'Admin phải tải được tài khoản cũ mà không cần SePay');
@@ -47,8 +48,7 @@ assert(read('migration-kit/section-order.csv').includes('Section Key,Order,Visib
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));
 ['loadPaymentContentConfig','createQrUrl','config.payment'].forEach(term=>assert(paymentScript.includes(term)||contentBackend.includes(term),`Payment config public thiếu ${term}`));
 ['payment-qr','payment-mode','copy-transfer'].forEach(id=>assert(read('payment.html').includes(`id="${id}"`),`Payment UI thiếu ${id}`));
-['PAYMENT_MODE','PAYMENT_BANK_CODE','paymentQrUrl_','Payment Transaction ID','PAYMENT_MISMATCH'].forEach(term=>assert(bookingBackend.includes(term),`Payment backend thiếu ${term}`));
-const sepayProxy=read('api/sepay-webhook.js');['SEPAY_API_KEY','PAYMENT_WEBHOOK_SECRET','timingSafeEqual','Apikey'].forEach(term=>assert(sepayProxy.includes(term),`SePay proxy thiếu ${term}`));
+['PAYMENT_BANK_CODE','paymentQrUrl_','Payment Transaction ID'].forEach(term=>assert(bookingBackend.includes(term),`Payment backend thiếu ${term}`));
 const vercelConfig=JSON.parse(read('vercel.json'));const cspHeaders=vercelConfig.headers.flatMap(rule=>rule.headers).filter(header=>header.key==='Content-Security-Policy');assert(cspHeaders.every(header=>header.value.includes('https://img.vietqr.io')),'Mọi CSP áp dụng cho payment phải cho phép ảnh QR VietQR');
 assert(paymentScript.includes("elements.qr.style.display = qrUrl ? 'block' : 'none'"),'Payment phải ẩn ảnh QR lỗi thay vì giữ khung trắng');
 const thankyouScript=read('thankyou.js');assert(thankyouScript.includes("url.searchParams.set('action', 'checkPayment')"),'Thank-you phải xác minh trạng thái từ backend');assert(!thankyouScript.includes("params.get('status')"),'Thank-you không được tin status từ URL');

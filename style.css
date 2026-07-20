@@ -1046,6 +1046,8 @@ body:hover #custom-cursor { opacity: 1; }
 
 
 .pkg-card {
+  display: flex;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(184, 184, 255, 0.15);
   border-radius: 28px;
@@ -1147,6 +1149,7 @@ body:hover #custom-cursor { opacity: 1; }
 .pkg-features {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 10px;
   margin-bottom: 28px;
 }
@@ -1161,7 +1164,9 @@ body:hover #custom-cursor { opacity: 1; }
 .pkg-features li span { color: var(--gold); font-size: 0.75rem; }
 
 .pkg-btn {
-  display: block;
+  display: grid;
+  place-items: center;
+  min-height: 50px;
   text-align: center;
   background: rgba(255, 255, 255, 0.08);
   border: 1.5px solid rgba(184, 184, 255, 0.25);
@@ -1169,9 +1174,10 @@ body:hover #custom-cursor { opacity: 1; }
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 0.9rem;
-  padding: 12px;
-  border-radius: 14px;
-  transition: background 0.25s, border-color 0.25s, transform 0.25s var(--ease-spring);
+  padding: 12px 18px;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  transition: background 0.25s, border-color 0.25s, color .25s, transform 0.25s var(--ease-spring), box-shadow .25s;
 }
 .pkg-btn:hover {
   background: linear-gradient(135deg, var(--soft-periwinkle), var(--periwinkle));
@@ -1179,12 +1185,15 @@ body:hover #custom-cursor { opacity: 1; }
   transform: translateY(-2px);
 }
 .pkg-featured .pkg-btn {
-  background: linear-gradient(135deg, var(--soft-periwinkle), var(--periwinkle));
-  border-color: transparent;
+  color: var(--deep-purple);
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-color: rgba(255,233,168,.7);
+  box-shadow: 0 12px 28px rgba(201,168,76,.2),inset 0 1px 0 rgba(255,255,255,.4);
 }
 .pkg-featured .pkg-btn:hover {
-  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  background: linear-gradient(135deg, var(--gold-light), #fff0b7);
   color: var(--deep-purple);
+  box-shadow: 0 16px 34px rgba(201,168,76,.3),inset 0 1px 0 rgba(255,255,255,.55);
 }
 
 .extra-time-note {

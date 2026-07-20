@@ -7,6 +7,7 @@ assert(new Set(packages.map(item=>item.code)).size===packages.length,'Package co
 packages.forEach(item=>{assert(item.price>0,`Giá ${item.code} phải dương`);assert(item.duration>0,`Thời lượng ${item.code} phải dương`);assert(['phút','giờ'].includes(item.unit),`Đơn vị ${item.code} không hợp lệ`)});
 const html=read('index.html');['config.js','data.js','script.js'].forEach(file=>assert(html.includes(`src="${file}"`),`Thiếu ${file} trong index.html`));
 assert((html.match(/data-content-key=/g)||[]).length>=26,'Landing phải có mapping Content Sheet cho các nội dung chính');
+assert(!html.includes('class="pkg-btn" id="btn-pkg2" style='),'CTA package không được dùng style inline ghi đè theme');
 ['payment.html','thankyou.html','admin/index.html','vercel.json'].forEach(file=>assert(fs.existsSync(path.join(root,file)),`Thiếu ${file}`));
 const bookingBackend=read('apps-script/booking-payment/Code.gs');packages.forEach(item=>assert(bookingBackend.includes(`'${item.code}'`),`Backend thiếu package ${item.code}`));
 ['normalizeOrderId_','INVALID_STATE','Last Updated At'].forEach(term=>assert(bookingBackend.includes(term),`Booking backend thiếu contract ${term}`));
@@ -25,6 +26,7 @@ const adminHtml=read('admin/index.html');['navigation-panel','sections-panel','u
 const adminScript=read('admin/app.js');assert(adminScript.includes("await api('saveUser', record)"),'Admin UI thiếu lưu user');assert(!adminScript.includes('Password Hash'),'Admin UI không được đọc hoặc hiển thị password hash');
 ['renderContentRecords','createContentEditor','Preview an toàn'].forEach(term=>assert(adminScript.includes(term),`Content editor thiếu ${term}`));
 ['renderPackages','createPackageEditor',"await api('savePackage', record)"].forEach(term=>assert(adminScript.includes(term),`Package editor thiếu ${term}`));
+['editor-heading','package-fields','package-details','editor-actions','content-editor-body'].forEach(term=>assert(adminScript.includes(term),`Admin editor thiếu cấu trúc ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
 const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));
 assert(landingScript.includes("fetch('/api/config'"),'Landing phải lấy CONTENT_API_URL runtime từ Vercel /api/config');

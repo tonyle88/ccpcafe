@@ -81,21 +81,34 @@ function createPackageEditor(original) {
   const record = { Unit:'phút', Enabled:true, Featured:false, Order:0, ...original };
   const isNew = !record.Code;
   const card = document.createElement('article'); card.className = 'package-editor';
-  card.append(field('Code', record.Code, value => { record.Code = value.trim().toLowerCase(); }, 'text', !isNew));
-  card.append(field('Tên gói', record.Name, value => { record.Name = value; }));
-  card.append(field('Giá (VND)', record.Price, value => { record.Price = value; }, 'number'));
-  card.append(field('Thời lượng', record.Duration, value => { record.Duration = value; }, 'number'));
-  card.append(selectField('Đơn vị', record.Unit, ['phút','giờ'], value => { record.Unit = value; }));
-  card.append(field('Thứ tự', record.Order, value => { record.Order = value; }, 'number'));
-  card.append(field('Icon', record.Icon, value => { record.Icon = value; }));
-  card.append(field('Tag', record.Tag, value => { record.Tag = value; }));
-  card.append(field('Hiển thị', record.Enabled, value => { record.Enabled = value; }, 'checkbox'));
-  card.append(field('Featured', record.Featured, value => { record.Featured = value; }, 'checkbox'));
+  const heading = document.createElement('header'); heading.className = 'editor-heading';
+  const headingText = document.createElement('div');
+  const kicker = document.createElement('span'); kicker.className = 'editor-kicker'; kicker.textContent = isNew ? 'Gói mới' : `Gói #${record.Order || '—'}`;
+  const title = document.createElement('h3'); title.textContent = record.Name || 'Chưa đặt tên';
+  headingText.append(kicker, title);
+  const status = document.createElement('span'); status.className = `editor-status${record.Enabled ? ' is-active' : ''}`; status.textContent = record.Enabled ? 'Đang hiển thị' : 'Đang ẩn';
+  heading.append(headingText, status); card.append(heading);
+  const basics = document.createElement('div'); basics.className = 'package-fields';
+  basics.append(field('Code', record.Code, value => { record.Code = value.trim().toLowerCase(); }, 'text', !isNew));
+  basics.append(field('Tên gói', record.Name, value => { record.Name = value; title.textContent = value || 'Chưa đặt tên'; }));
+  basics.append(field('Giá (VND)', record.Price, value => { record.Price = value; }, 'number'));
+  basics.append(field('Thời lượng', record.Duration, value => { record.Duration = value; }, 'number'));
+  basics.append(selectField('Đơn vị', record.Unit, ['phút','giờ'], value => { record.Unit = value; }));
+  basics.append(field('Thứ tự', record.Order, value => { record.Order = value; }, 'number'));
+  basics.append(field('Icon', record.Icon, value => { record.Icon = value; }));
+  basics.append(field('Tag', record.Tag, value => { record.Tag = value; }));
+  card.append(basics);
+  const toggles = document.createElement('div'); toggles.className = 'editor-toggles';
+  toggles.append(field('Hiển thị trên landing', record.Enabled, value => { record.Enabled = value; status.classList.toggle('is-active', value); status.textContent = value ? 'Đang hiển thị' : 'Đang ẩn'; }, 'checkbox'));
+  toggles.append(field('Gói nổi bật', record.Featured, value => { record.Featured = value; }, 'checkbox'));
+  card.append(toggles);
+  const details = document.createElement('div'); details.className = 'package-details';
   const features = field('Features (mỗi dòng một mục)', String(record.Features || '').split('|').join('\n'), value => { record.Features = value.split('\n').map(item => item.trim()).filter(Boolean).join('|'); }, 'textarea');
-  features.className = 'package-wide'; card.append(features);
+  features.className = 'package-wide'; details.append(features);
   const note = field('Booking note', record['Booking Note'], value => { record['Booking Note'] = value; }, 'textarea');
-  note.className = 'package-wide'; card.append(note);
-  const save = document.createElement('button'); save.textContent = isNew ? 'Tạo gói' : 'Lưu gói';
+  note.className = 'package-wide'; details.append(note); card.append(details);
+  const actions = document.createElement('footer'); actions.className = 'editor-actions';
+  const save = document.createElement('button'); save.className = 'button button-primary'; save.textContent = isNew ? '✦ Tạo gói' : '✦ Lưu thay đổi';
   save.addEventListener('click', async () => {
     save.disabled = true;
     try {
@@ -103,7 +116,7 @@ function createPackageEditor(original) {
     } catch (error) { notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true); }
     finally { save.disabled = false; }
   });
-  card.append(save);
+  actions.append(save); card.append(actions);
   return card;
 }
 
@@ -132,18 +145,20 @@ function createContentEditor(original) {
   const header = document.createElement('div'); header.className = 'content-editor-header';
   const title = document.createElement('strong'); title.textContent = record.Key;
   const description = document.createElement('span'); description.textContent = record.Description || 'Không có mô tả';
-  header.append(title, description); card.appendChild(header);
+  header.append(title, description);
   const metadata = document.createElement('p'); metadata.className = 'content-metadata';
   [record.Selector, record.Type || 'text', record.Attribute].filter(Boolean).forEach(value => { const chip=document.createElement('code'); chip.textContent=value; metadata.appendChild(chip); });
-  card.appendChild(metadata);
+  header.appendChild(metadata); card.appendChild(header);
+  const body = document.createElement('div'); body.className = 'content-editor-body';
   const editor = field('Giá trị', record.Value, value => { record.Value = value; preview.textContent = value; }, 'textarea');
-  editor.className = 'content-value'; card.appendChild(editor);
-  card.appendChild(field('Hiển thị', record.Enabled, value => { record.Enabled = value; }, 'checkbox'));
+  editor.className = 'content-value'; body.appendChild(editor);
   const previewWrap = document.createElement('div'); previewWrap.className = 'content-preview';
   const previewLabel = document.createElement('small'); previewLabel.textContent = 'Preview an toàn';
   const preview = document.createElement('p'); preview.textContent = record.Value || '—';
-  previewWrap.append(previewLabel, preview); card.appendChild(previewWrap);
-  const save = document.createElement('button'); save.textContent = 'Lưu nội dung';
+  previewWrap.append(previewLabel, preview); body.appendChild(previewWrap); card.appendChild(body);
+  const actions = document.createElement('footer'); actions.className = 'editor-actions';
+  actions.appendChild(field('Hiển thị trên landing', record.Enabled, value => { record.Enabled = value; }, 'checkbox'));
+  const save = document.createElement('button'); save.className = 'button button-primary'; save.textContent = '✦ Lưu nội dung';
   save.addEventListener('click', async () => {
     save.disabled = true;
     try {
@@ -152,7 +167,7 @@ function createContentEditor(original) {
     } catch (error) { notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true); }
     finally { save.disabled = false; }
   });
-  card.appendChild(save);
+  actions.appendChild(save); card.appendChild(actions);
   return card;
 }
 

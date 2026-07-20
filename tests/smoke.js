@@ -28,6 +28,7 @@ const adminScript=read('admin/app.js');assert(adminScript.includes("await api('s
 ['renderPackages','createPackageEditor',"await api('savePackage', record)"].forEach(term=>assert(adminScript.includes(term),`Package editor thiếu ${term}`));
 ['editor-heading','package-fields','package-details','editor-actions','content-editor-body'].forEach(term=>assert(adminScript.includes(term),`Admin editor thiếu cấu trúc ${term}`));
 ['Tên hiển thị trên trang chủ','sectionLabels','managed-row'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu ${term}`));
+['switch-button','order-button','Đã cập nhật thứ tự hiển thị'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu điều khiển ${term}`));
 ['renderHealthOverview','content-health','booking-health','recent-errors'].forEach(term=>assert(adminScript.includes(term)||adminHtml.includes(`id="${term}"`),`Admin dashboard thiếu ${term}`));
 const landingScript=read('script.js');['renderContent','renderNavigation','renderSections','renderPublicData'].forEach(name=>assert(landingScript.includes(`function ${name}(`),`Landing thiếu renderer ${name}`));
 assert(landingScript.includes("fetch('/api/config'"),'Landing phải lấy CONTENT_API_URL runtime từ Vercel /api/config');

@@ -74,15 +74,13 @@ const recordViews = {
     fields:[
       { key:'Label', label:'Tên hiển thị trên trang chủ', type:'text' },
       { key:'Href', label:'Liên kết', type:'text' },
-      { key:'Type', label:'Kiểu hiển thị', type:'select', options:['link','cta'] },
-      { key:'Order', label:'Thứ tự', type:'number' }
+      { key:'Type', label:'Kiểu hiển thị', type:'select', options:['link','cta'] }
     ], enabledKey:'Enabled', enabledLabel:'Hiển thị trên menu'
   },
   section: {
     idKey:'Section Key', titleKey:'Label', action:'saveSection', kicker:'Section trang chủ',
     fields:[
-      { key:'Label', label:'Tên hiển thị trên trang chủ', type:'text' },
-      { key:'Order', label:'Thứ tự', type:'number' }
+      { key:'Label', label:'Tên hiển thị trên trang chủ', type:'text' }
     ], enabledKey:'Visible', enabledLabel:'Hiển thị section'
   }
 };
@@ -201,7 +199,8 @@ function renderRecords(targetId, records, kind) {
     root.appendChild(empty);
     return;
   }
-  records.forEach(original => {
+  const orderedRecords = [...records].sort((a,b) => Number(a.Order) - Number(b.Order));
+  orderedRecords.forEach((original,index) => {
     const record = { ...original };
     if (kind === 'section' && !record.Label) record.Label = sectionLabels[record[view.idKey]] || record[view.idKey];
     const row = document.createElement('article'); row.className = 'managed-row';
@@ -211,7 +210,35 @@ function renderRecords(targetId, records, kind) {
     const kicker = document.createElement('span'); kicker.className = 'editor-kicker'; kicker.textContent = view.kicker;
     const title = document.createElement('h3'); title.textContent = record[view.titleKey] || record[view.idKey];
     const code = document.createElement('code'); code.textContent = record[view.idKey];
-    headingText.append(kicker,title,code); heading.append(handle,headingText); row.append(heading);
+    headingText.append(kicker,title,code); heading.append(handle,headingText);
+    const controls = document.createElement('div'); controls.className = 'managed-controls';
+    const enabled = record[view.enabledKey] === true || String(record[view.enabledKey]).toLowerCase() === 'true' || String(record[view.enabledKey]) === '1';
+    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = `switch-button${enabled ? ' is-on' : ''}`; toggle.setAttribute('role','switch'); toggle.setAttribute('aria-checked',String(enabled)); toggle.setAttribute('aria-label',view.enabledLabel); toggle.innerHTML = '<span></span>';
+    toggle.addEventListener('click', async () => {
+      toggle.disabled = true;
+      record[view.enabledKey] = !enabled;
+      try { await api(view.action, record); notify(record[view.enabledKey] ? '✦ Đã bật hiển thị' : '✦ Đã tắt hiển thị'); await loadAdmin(); }
+      catch (error) { notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true); toggle.disabled = false; }
+    });
+    const up = document.createElement('button'); up.type = 'button'; up.className = 'order-button'; up.textContent = '↑'; up.setAttribute('aria-label',`Đưa ${title.textContent} lên`); up.disabled = index === 0;
+    const down = document.createElement('button'); down.type = 'button'; down.className = 'order-button'; down.textContent = '↓'; down.setAttribute('aria-label',`Đưa ${title.textContent} xuống`); down.disabled = index === orderedRecords.length - 1;
+    const move = async direction => {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= orderedRecords.length) return;
+      up.disabled = true; down.disabled = true;
+      const reordered = orderedRecords.map(item => ({ ...item }));
+      if (kind === 'section') reordered.forEach(item => { if (!item.Label) item.Label = sectionLabels[item[view.idKey]] || item[view.idKey]; });
+      [reordered[index],reordered[targetIndex]] = [reordered[targetIndex],reordered[index]];
+      try {
+        for (let position=0; position<reordered.length; position++) {
+          reordered[position].Order = position + 1;
+          await api(view.action, reordered[position]);
+        }
+        notify('✦ Đã cập nhật thứ tự hiển thị'); await loadAdmin();
+      } catch (error) { notify(`${error.message}${error.requestId ? ` · Mã ${error.requestId}` : ''}`, true); up.disabled = index === 0; down.disabled = index === orderedRecords.length - 1; }
+    };
+    up.addEventListener('click', () => move(-1)); down.addEventListener('click', () => move(1));
+    controls.append(toggle,up,down); heading.append(controls); row.append(heading);
     const fields = document.createElement('div'); fields.className = 'managed-fields';
     view.fields.forEach(config => {
       const update = value => { record[config.key] = value; if (config.key === view.titleKey) title.textContent = value || record[view.idKey]; };
@@ -219,7 +246,6 @@ function renderRecords(targetId, records, kind) {
     });
     row.append(fields);
     const actions = document.createElement('footer'); actions.className = 'editor-actions managed-actions';
-    actions.append(field(view.enabledLabel, record[view.enabledKey], value => { record[view.enabledKey] = value; }, 'checkbox'));
     const save = document.createElement('button');
     save.className = 'button button-primary'; save.textContent = '✦ Lưu thay đổi';
     save.addEventListener('click', async () => {

@@ -9,8 +9,8 @@ const elements = {
   amount:document.getElementById('thankyou-amount'), name:document.getElementById('thankyou-name'),
   customerRow:document.getElementById('customer-row'), backPayment:document.getElementById('back-payment')
 };
-const statusLabels = { PAID:'Đã thanh toán', CONFIRMED:'Đã xác nhận', COMPLETED:'Hoàn tất', PAYMENT_REVIEW:'Đang chờ đối soát', PENDING_PAYMENT:'Chưa thanh toán' };
-const successStatuses = new Set(['PAID','CONFIRMED','COMPLETED']);
+const statusLabels = { PAID:'Đã thanh toán', CONFIRMED:'Đã xác nhận', COMPLETED:'Hoàn tất', PAYMENT_REVIEW:'Đăng ký thành công · chờ xác nhận', PENDING_PAYMENT:'Chưa thanh toán' };
+const successStatuses = new Set(['PAYMENT_REVIEW','PAID','CONFIRMED','COMPLETED']);
 
 function formatVnd(value) { return Number.isFinite(Number(value)) ? new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND'}).format(Number(value)) : '—'; }
 function renderSummary(order) {
@@ -20,13 +20,13 @@ function renderSummary(order) {
   if(summary.orderId===orderId&&summary.name){elements.name.textContent=summary.name;elements.customerRow.style.display='flex';}
 }
 function renderState(order) {
-  const status=order.status, success=successStatuses.has(status);
+  const status=order.status, success=successStatuses.has(status), review=status==='PAYMENT_REVIEW';
   renderSummary(order);
   elements.status.textContent=statusLabels[status]||'Chưa xác định';
   elements.badge.className=`status-badge ${success?'success':'review'}`;
-  elements.badge.innerHTML=`<span></span> ${success?'Thanh toán đã xác nhận':'Đang chờ xác nhận'}`;
+  elements.badge.innerHTML=`<span></span> ${review?'Đăng ký thành công':success?'Thanh toán đã xác nhận':'Đang chờ xác nhận'}`;
   if(success){
-    elements.message.innerHTML='Đơn đăng ký và thanh toán của bạn đã được xác nhận.<br>Chúng mình sẽ liên hệ để chốt lịch trong vòng <strong>24 giờ</strong>.';
+    elements.message.innerHTML=review?'Thông báo chuyển khoản của bạn đã được ghi nhận.<br>Hãy nhắn fanpage để chúng mình kiểm tra và chốt lịch trong vòng <strong>24 giờ</strong>.':'Đơn đăng ký và thanh toán của bạn đã được xác nhận.<br>Chúng mình sẽ liên hệ để chốt lịch trong vòng <strong>24 giờ</strong>.';
     elements.backPayment.style.display='none';
   }else{
     elements.title.innerHTML='Đăng ký của bạn<br><em>đã được ghi nhận!</em>';

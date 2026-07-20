@@ -1,0 +1,17 @@
+.fanpage-action {
+  display: inline-flex;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #1688f0;
+  box-shadow: 0 8px 24px rgba(22, 136, 240, .25);
+  color: #fff;
+  font: 800 .82rem/1.2 system-ui, sans-serif;
+  text-decoration: none;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.fanpage-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 11px 30px rgba(22, 136, 240, .34);
+}

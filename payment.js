@@ -11,7 +11,7 @@ const elements = {
   qr: document.getElementById('payment-qr'), qrUnavailable: document.getElementById('qr-unavailable'),
   mode: document.getElementById('payment-mode'), modeHelp: document.getElementById('mode-help'), copy: document.getElementById('copy-transfer')
 };
-const SUCCESS_STATUSES = new Set(['PAID', 'CONFIRMED', 'COMPLETED']);
+const SUCCESS_STATUSES = new Set(['PAYMENT_REVIEW', 'PAID', 'CONFIRMED', 'COMPLETED']);
 const STOP_STATUSES = new Set([...SUCCESS_STATUSES, 'CANCELLED', 'EXPIRED']);
 const POLL_DELAYS = [5000, 10000, 20000, 30000, 60000];
 const POLL_MAX_MS = 10 * 60 * 1000;
@@ -113,9 +113,7 @@ function render(order) {
   elements.qrUnavailable.style.display = qrUrl ? 'none' : 'block';
   elements.qr.dataset.fallback = directQrUrl;
   if (qrUrl && elements.qr.src !== new URL(qrUrl,location.href).href) elements.qr.src = qrUrl;
-  const reviewing = order.status === 'PAYMENT_REVIEW';
-  elements.confirm.disabled = reviewing || STOP_STATUSES.has(order.status);
-  if (reviewing) elements.confirm.textContent = 'Đang chờ đối soát';
+  elements.confirm.disabled = STOP_STATUSES.has(order.status);
   if (SUCCESS_STATUSES.has(order.status)) {
     stopPolling();
     location.replace(`thankyou.html?orderId=${encodeURIComponent(order.orderId)}`);
@@ -149,7 +147,7 @@ elements.confirm.addEventListener('click', async () => {
     const payload = await api('manualConfirm', 'POST', { orderId });
     if (!payload.ok) throw new Error(payload.error?.message || 'Không thể cập nhật trạng thái.');
     elements.status.textContent = payload.data.status;
-    elements.confirm.textContent = payload.data.status === 'PAYMENT_REVIEW' ? 'Đang chờ đối soát' : 'Đã cập nhật';
+    elements.confirm.textContent = payload.data.status === 'PAYMENT_REVIEW' ? 'Đã ghi nhận' : 'Đã cập nhật';
     if (SUCCESS_STATUSES.has(payload.data.status)) location.replace(`thankyou.html?orderId=${encodeURIComponent(orderId)}`);
   } catch (error) {
     elements.error.textContent = error.message;

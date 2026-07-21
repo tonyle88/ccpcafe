@@ -8,7 +8,7 @@ const CONTENT_SCHEMA = Object.freeze({
   'Audit Log': ['Timestamp','Action','Status','Username','Role','Target Type','Target ID','Details','Message'],
   'Backup Log': ['Timestamp','Type','Status','Username','File ID','File Name','File URL','Details','Message']
 });
-const PUBLIC_CACHE_KEY = 'public-init-v4';
+const PUBLIC_CACHE_KEY = 'public-init-v5';
 
 function doGet(e) {
   const action = String((e && e.parameter && e.parameter.action) || 'health');
@@ -325,15 +325,41 @@ function seedContent_(spreadsheet) {
       ['hero.secondaryCta','hero','Nút xem gói','[data-content-key="hero.secondaryCta"]','text','','Xem gói dịch vụ'],
       ['hero.giftTitle','hero','Tiêu đề quà tặng','[data-content-key="hero.giftTitle"]','text','','Tặng ngay 1 ly nước'],
       ['hero.giftSubtitle','hero','Mô tả quà tặng','[data-content-key="hero.giftSubtitle"]','text','','Bất kì khi đặt lịch'],
+      ['hero.titlePrimary','hero','Tiêu đề chính','[data-content-key="hero.titlePrimary"]','text','','Clow Card'],
+      ['hero.titleAccent','hero','Tiêu đề nhấn mạnh','[data-content-key="hero.titleAccent"]','text','','Định Hướng'],
+      ['hero.sloganPrefix','hero','Mở đầu slogan','[data-content-key="hero.sloganPrefix"]','text','','Nhận ngay'],
+      ['hero.sloganHighlight','hero','Nội dung slogan nổi bật','[data-content-key="hero.sloganHighlight"]','text','','nước FREE'],
       ['about.tag','about','Nhãn section','[data-content-key="about.tag"]','text','','✦ Về dịch vụ'],
       ['about.title','about','Tiêu đề giới thiệu','[data-content-key="about.title"]','text','','Bài Clow – Gương soi tâm hồn'],
       ['about.audienceLabel','about','Nhãn nhóm khách hàng','[data-content-key="about.audienceLabel"]','text','','Dịch vụ dành cho'],
+      ['about.body1','about','Đoạn giới thiệu 1','[data-content-key="about.body1"]','text','','Bộ bài Clow được lấy cảm hứng từ thế giới phép thuật của Card Captor Sakura. Mỗi tấm bài chứa đựng năng lượng và thông điệp riêng biệt, giúp bạn nhìn nhận vấn đề từ một góc độ khác.'],
+      ['about.body2','about','Đoạn giới thiệu 2','[data-content-key="about.body2"]','text','','Không phải bói toán – đây là công cụ phản chiếu nội tâm độc đáo, giúp bạn kết nối với bản thân sâu hơn và đưa ra những quyết định đúng đắn hơn.'],
+      ['about.body3','about','Đoạn giới thiệu 3','[data-content-key="about.body3"]','text','','Trong không gian ấm cúng của The Comma Café, những người có kinh nghiệm sẽ ngồi lại cùng bạn – lắng nghe, thấu hiểu và đồng hành qua từng tấm bài được lật lên.'],
+      ['about.topic1','about','Chủ đề tư vấn 1','[data-content-key="about.topic1"]','text','','Công việc & định hướng nghề nghiệp'],
+      ['about.topic2','about','Chủ đề tư vấn 2','[data-content-key="about.topic2"]','text','','Tình cảm & các mối quan hệ'],
+      ['about.topic3','about','Chủ đề tư vấn 3','[data-content-key="about.topic3"]','text','','Học tập & phát triển bản thân'],
+      ['about.topic4','about','Chủ đề tư vấn 4','[data-content-key="about.topic4"]','text','','Khám phá bản thân & chữa lành'],
+      ['about.audience1','about','Nhóm khách hàng 1','[data-content-key="about.audience1"]','text','','Học sinh · Sinh viên'],
+      ['about.audience2','about','Nhóm khách hàng 2','[data-content-key="about.audience2"]','text','','Người đi làm'],
+      ['about.audience3','about','Nhóm khách hàng 3','[data-content-key="about.audience3"]','text','','Người cần định hướng'],
+      ['about.audience4','about','Nhóm khách hàng 4','[data-content-key="about.audience4"]','text','','Người cần được lắng nghe'],
       ['instructor.name','instructor','Tên người hướng dẫn','[data-content-key="instructor.name"]','text','','a.k.a Phan Thái Bảo'],
       ['instructor.tag','instructor','Nhãn người hướng dẫn','[data-content-key="instructor.tag"]','text','','✦ NGƯỜI HƯỚNG DẪN'],
       ['instructor.title','instructor','Tiêu đề người hướng dẫn','[data-content-key="instructor.title"]','text','','Clow Cat Patronus'],
       ['instructor.quote','instructor','Giới thiệu người hướng dẫn','[data-content-key="instructor.quote"]','text','','Người đồng hành cùng hàng ngàn tâm hồn trên hành trình khám phá bản thân qua ngôn ngữ của những lá bài Clow huyền bí.'],
+      ['instructor.stat1','instructor','Thành tích 1','[data-content-key="instructor.stat1"]','text','','Hơn 10 năm nghiên cứu Huyền Học, đặc biệt bộ bài Clow'],
+      ['instructor.stat2','instructor','Thành tích 2','[data-content-key="instructor.stat2"]','text','','Đã tư vấn cho hơn 1.000 khách hàng'],
+      ['instructor.stat3','instructor','Thành tích 3','[data-content-key="instructor.stat3"]','text','','Khai giảng từ 2019, hơn 20 khoá học với 120+ học viên'],
+      ['instructor.stat4','instructor','Thành tích 4','[data-content-key="instructor.stat4"]','text','','Tổ chức hơn 10 buổi workshop từ 2024 với chủ đề Ứng dụng Huyền Học và Bài Clow để HIỂU & THƯƠNG'],
       ['packages.tag','packages','Nhãn gói dịch vụ','[data-content-key="packages.tag"]','text','','✦ Gói dịch vụ'],
       ['packages.title','packages','Tiêu đề gói dịch vụ','[data-content-key="packages.title"]','text','','Chọn hành trình của bạn'],
+      ['packages.descriptionPrefix','packages','Mở đầu mô tả','[data-content-key="packages.descriptionPrefix"]','text','','Mỗi buổi trải bài đều kèm theo'],
+      ['packages.descriptionHighlight','packages','Mô tả nổi bật','[data-content-key="packages.descriptionHighlight"]','text','','1 ly nước bất kì miễn phí'],
+      ['packages.descriptionSuffix','packages','Kết thúc mô tả','[data-content-key="packages.descriptionSuffix"]','text','','từ The Comma ☕'],
+      ['packages.extraTimeIntro','packages','Mở đầu phụ phí thời gian','[data-content-key="packages.extraTimeIntro"]','text','','Cần thêm thời gian?'],
+      ['packages.extraTimeOffer','packages','Nội dung phụ phí thời gian','[data-content-key="packages.extraTimeOffer"]','text','', '+15 phút chỉ 100.000đ'],
+      ['packages.discount2Label','packages','Mô tả ưu đãi 2 người','[data-content-key="packages.discount2Label"]','text','','Khi đi cùng 1 người bạn'],
+      ['packages.discount3Label','packages','Mô tả ưu đãi 3 người','[data-content-key="packages.discount3Label"]','text','','Khi đi cùng 2 người bạn'],
       ['process.tag','process','Nhãn quy trình','[data-content-key="process.tag"]','text','','✦ Quy trình'],
       ['process.title','process','Tiêu đề quy trình','[data-content-key="process.title"]','text','','Chỉ 3 bước đơn giản'],
       ['process.step1Title','process','Tên bước 1','[data-content-key="process.step1Title"]','text','','Đặt lịch'],
@@ -342,9 +368,24 @@ function seedContent_(spreadsheet) {
       ['process.step2Description','process','Mô tả bước 2','[data-content-key="process.step2Description"]','text','','Đến đúng giờ, chọn ly nước miễn phí và thoải mái trong không gian ấm cúng.'],
       ['process.step3Title','process','Tên bước 3','[data-content-key="process.step3Title"]','text','','Trải bài & tâm sự'],
       ['process.step3Description','process','Mô tả bước 3','[data-content-key="process.step3Description"]','text','','Chia sẻ những gì bạn đang trăn trở. Từng tấm bài Clow sẽ dẫn lối cho bạn.'],
+      ['feedback.tag','feedback','Nhãn cảm nhận','[data-content-key="feedback.tag"]','text','','✦ Cảm nhận thực tế'],
+      ['feedback.titlePrimary','feedback','Tiêu đề cảm nhận dòng 1','[data-content-key="feedback.titlePrimary"]','text','','Những điều khách hàng'],
+      ['feedback.titleSecondary','feedback','Tiêu đề cảm nhận dòng 2','[data-content-key="feedback.titleSecondary"]','text','','chia sẻ sau buổi trải bài'],
       ['booking.tag','book','Nhãn đặt lịch','[data-content-key="booking.tag"]','text','','✦ Sẵn sàng bắt đầu?'],
+      ['booking.titlePrimary','book','Tiêu đề đặt lịch','[data-content-key="booking.titlePrimary"]','text','','Đặt Lịch'],
+      ['booking.titleAccent','book','Tiêu đề đặt lịch nổi bật','[data-content-key="booking.titleAccent"]','text','','Ngay Hôm Nay'],
+      ['booking.descriptionPrimary','book','Mô tả đặt lịch dòng 1','[data-content-key="booking.descriptionPrimary"]','text','','Đừng để những câu hỏi chưa có lời giải cứ mãi đeo bám.'],
+      ['booking.descriptionSecondary','book','Mô tả đặt lịch dòng 2','[data-content-key="booking.descriptionSecondary"]','text','','Hãy để bài Clow soi sáng con đường của bạn.'],
+      ['booking.extraTime','book','Phụ phí thêm thời gian','[data-content-key="booking.extraTime"]','text','','Thêm +15 phút chỉ 100k'],
       ['booking.formTitle','book','Tiêu đề form','[data-content-key="booking.formTitle"]','text','','Đăng Ký Đặt Lịch'],
-      ['booking.footnote','book','Ghi chú phản hồi','[data-content-key="booking.footnote"]','text','','Chúng tôi sẽ liên hệ xác nhận lịch trong vòng 24 giờ.']
+      ['booking.footnote','book','Ghi chú phản hồi','[data-content-key="booking.footnote"]','text','','Chúng tôi sẽ liên hệ xác nhận lịch trong vòng 24 giờ.'],
+      ['footer.contactTitle','footer','Tiêu đề liên hệ','[data-content-key="footer.contactTitle"]','text','','LIÊN HỆ'],
+      ['footer.contactPrimary','footer','Mô tả liên hệ dòng 1','[data-content-key="footer.contactPrimary"]','text','','Tìm hiểu thêm qua các nền tảng'],
+      ['footer.contactSecondary','footer','Mô tả liên hệ dòng 2','[data-content-key="footer.contactSecondary"]','text','','mạng xã hội của Clow Cat Patronus:'],
+      ['footer.servicesTitle','footer','Tiêu đề dịch vụ','[data-content-key="footer.servicesTitle"]','text','','DỊCH VỤ'],
+      ['footer.slogan','footer','Slogan chân trang','[data-content-key="footer.slogan"]','text','','KHÁM PHÁ BẢN THÂN, BẬT PHÁ TIỀM NĂNG'],
+      ['footer.copyright','footer','Bản quyền','[data-content-key="footer.copyright"]','text','','© 2026 ClowCat Patronus. Tất cả quyền được bảo lưu.'],
+      ['footer.tagline','footer','Thông điệp cuối trang','[data-content-key="footer.tagline"]','text','','✦ Được tạo ra với tình yêu và năng lượng tích cực ✦']
   ];
   const existingContentKeys = new Set(rowsAsObjects_(content).map(row => String(row.Key)));
   const missingContent = contentSeed.filter(row => !existingContentKeys.has(row[0])).map(row => [true].concat(row,[new Date(),'setup']));

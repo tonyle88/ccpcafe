@@ -1215,6 +1215,18 @@ body:hover #custom-cursor { opacity: 1; }
   z-index: 1;
 }
 .extra-time-note strong { color: var(--gold-light); }
+.extra-time-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(232, 169, 106, .42);
+  border-radius: 12px;
+  background: rgba(232, 169, 106, .1);
+  box-shadow: 0 8px 22px rgba(201, 134, 60, .14);
+}
+.extra-time-icon img { width: 22px; height: 22px; object-fit: contain; }
 .star-deco { color: var(--gold); opacity: 0.6; }
 
 .discounts-row {
@@ -1762,6 +1774,8 @@ body:hover #custom-cursor { opacity: 1; }
   margin-bottom: 40px;
 }
 .book-discounts strong { color: var(--gold-light); }
+.book-discount-extra { display: inline-flex; align-items: center; gap: 7px; color: var(--gold-light); font-weight: 700; }
+.book-discount-extra .inline-icon { opacity: 1; filter: drop-shadow(0 0 8px rgba(232,169,106,.35)); }
 .sep { color: rgba(184, 184, 255, 0.3); }
 
 .btn-huge {

@@ -19,7 +19,7 @@ assert(contentBackend.includes("!/^https:\\/\\//i.test(href)"),'Navigation phả
 assert(contentBackend.includes("requireSession_(body.token, ['admin'])"),'API user phải chỉ cho admin');
 ['Bạn không thể tự hạ quyền','Phải giữ ít nhất một admin'].forEach(message=>assert(contentBackend.includes(message),`User guard thiếu: ${message}`));
 ['contentPublic_','navigationPublic_','sectionPublic_'].forEach(mapper=>assert(contentBackend.includes(`.map(${mapper})`),`Public API thiếu allowlist mapper ${mapper}`));
-assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v4'"),'Public cache key phải tăng khi contract đổi');
+assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v5'"),'Public cache key phải tăng khi contract đổi');
 assert(contentBackend.includes('missingContent')&&contentBackend.includes('existingContentKeys'),'Content seed phải migration idempotent cho Sheet hiện có');
 ['bookingRemoteHealth_','operationsSummary_','UrlFetchApp.fetch'].forEach(term=>assert(contentBackend.includes(term),`Admin dashboard backend thiếu ${term}`));
 assert(contentBackend.includes('script\\.google\\.com|script\\.googleusercontent\\.com'),'Booking health endpoint phải giới hạn Google Apps Script');
@@ -27,6 +27,7 @@ const adminHtml=read('admin/index.html');['navigation-panel','sections-panel','u
 assert(adminHtml.includes('booking-web-app-url')&&contentBackend.includes('saveBookingConfig'),'Admin phải cấu hình được Booking Script');
 const adminScript=read('admin/app.js');assert(adminScript.includes("await api('saveUser', record)"),'Admin UI thiếu lưu user');assert(!adminScript.includes('Password Hash'),'Admin UI không được đọc hoặc hiển thị password hash');
 ['renderContentRecords','createContentEditor','Preview an toàn'].forEach(term=>assert(adminScript.includes(term),`Content editor thiếu ${term}`));
+['content-group-body','sectionOrder','nội dung'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Content Admin thiếu nhóm theo section: ${term}`));
 ['renderPackages','createPackageEditor',"await api('savePackage', record)"].forEach(term=>assert(adminScript.includes(term),`Package editor thiếu ${term}`));
 ['editor-heading','package-fields','package-details','editor-actions','content-editor-body'].forEach(term=>assert(adminScript.includes(term),`Admin editor thiếu cấu trúc ${term}`));
 ['Tên hiển thị trên trang chủ','sectionLabels','managed-row'].forEach(term=>assert(adminScript.includes(term)||read('admin/style.css').includes(term),`Admin menu/section thiếu ${term}`));
@@ -48,7 +49,11 @@ assert(read('api/config.js').includes('bookingApiUrl'),'Runtime config phải c�
 assert(!landingScript.includes('preferredDateInput.value = today'),'Form ngày không được tự chọn hôm nay');
 ['showPicker','syncDatePlaceholder'].forEach(term=>assert(landingScript.includes(term),`Date picker thiếu ${term}`));
 ['bookingDateVi_','dd/MM/yyyy','setSpreadsheetTimeZone'].forEach(term=>assert(bookingBackend.includes(term),`Định dạng ngày Việt Nam thiếu ${term}`));
-assert(read('migration-kit/content.csv').split('\n').length>=27,'Migration content phải chứa đầy đủ key landing chính');
+const landingContentKeys=[...html.matchAll(/data-content-key="([^"]+)"/g)].map(match=>match[1]);
+assert(new Set(landingContentKeys).size>=67,'Landing phải ánh xạ đầy đủ nội dung các section chính');
+[...new Set(landingContentKeys)].forEach(key=>assert(contentBackend.includes(`['${key}',`),`Content seed thiếu key ${key}`));
+assert(read('migration-kit/content.csv').split('\n').length>=68,'Migration content phải chứa đầy đủ key landing chính');
+assert(html.includes('book-discount-extra')&&html.includes('icons/icon-calendar.svg'),'Phụ phí 15 phút phải có icon đồng bộ với page');
 assert(read('migration-kit/section-order.csv').includes('Section Key,Order,Visible,Label'),'Migration section phải có tên tiếng Việt');
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));
 ['loadPaymentContentConfig','createQrUrl','config.payment'].forEach(term=>assert(paymentScript.includes(term)||contentBackend.includes(term),`Payment config public thiếu ${term}`));

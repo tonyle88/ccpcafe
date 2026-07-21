@@ -148,10 +148,19 @@ function renderContentRecords(records) {
     (result[section] ||= []).push(record);
     return result;
   }, {});
-  Object.entries(groups).forEach(([section, sectionRecords]) => {
-    const group = document.createElement('section'); group.className = 'content-group';
-    const heading = document.createElement('h3'); heading.textContent = sectionLabels[section] || section; group.appendChild(heading);
-    sectionRecords.forEach(original => group.appendChild(createContentEditor(original)));
+  const sectionOrder=Object.keys(sectionLabels);
+  Object.entries(groups).sort(([left],[right])=>{
+    const leftIndex=sectionOrder.indexOf(left),rightIndex=sectionOrder.indexOf(right);
+    return (leftIndex<0?999:leftIndex)-(rightIndex<0?999:rightIndex)||(sectionLabels[left]||left).localeCompare(sectionLabels[right]||right,'vi');
+  }).forEach(([section, sectionRecords],index) => {
+    const group = document.createElement('details'); group.className = 'content-group'; group.open=index===0;
+    const summary=document.createElement('summary');
+    const heading = document.createElement('strong'); heading.textContent = sectionLabels[section] || section;
+    const count=document.createElement('span'); count.textContent=`${sectionRecords.length} nội dung`;
+    summary.append(heading,count);group.appendChild(summary);
+    const content=document.createElement('div');content.className='content-group-body';
+    sectionRecords.sort((left,right)=>String(left.Key||'').localeCompare(String(right.Key||''),'vi')).forEach(original => content.appendChild(createContentEditor(original)));
+    group.appendChild(content);
     root.appendChild(group);
   });
 }

@@ -57,6 +57,24 @@ function isSafePublicUrl(value) {
   return url.startsWith('#') || (url.startsWith('/') && !url.startsWith('//')) || /^https:\/\//i.test(url) || /^[a-z0-9][a-z0-9._\/-]*$/i.test(url);
 }
 
+function normalizeYouTubeEmbedUrl(value) {
+  const input=String(value||'').trim();
+  if(!input)return '';
+  if(/^[A-Za-z0-9_-]{6,20}$/.test(input))return `https://www.youtube.com/embed/${input}`;
+  try {
+    const url=new URL(/^https?:\/\//i.test(input)?input:`https://${input}`),host=url.hostname.toLowerCase().replace(/^www\./,'');
+    if(!['youtube.com','m.youtube.com','youtu.be','youtube-nocookie.com'].includes(host))return '';
+    let videoId='';
+    if(host==='youtu.be')videoId=url.pathname.split('/').filter(Boolean)[0]||'';
+    else if(url.pathname==='/watch')videoId=url.searchParams.get('v')||'';
+    else {const parts=url.pathname.split('/').filter(Boolean);if(['embed','shorts','live'].includes(parts[0]))videoId=parts[1]||'';}
+    if(/^[A-Za-z0-9_-]{6,20}$/.test(videoId))return `https://www.youtube.com/embed/${videoId}`;
+    const playlist=url.searchParams.get('list')||'';
+    if(/^[A-Za-z0-9_-]{10,80}$/.test(playlist))return `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(playlist)}`;
+  } catch (_) {}
+  return '';
+}
+
 function renderContent() {
   const allowedAttributes = new Set(['alt', 'aria-label', 'href', 'src', 'title']);
   (publicData.content || []).forEach(item => {
@@ -64,6 +82,11 @@ function renderContent() {
     let target;
     try { target = document.querySelector(item.selector); } catch (_) { return; }
     if (!target) return;
+    if(item.key==='instructor.youtubeUrl'){
+      const embedUrl=normalizeYouTubeEmbedUrl(item.value);
+      if(embedUrl)target.setAttribute('src',embedUrl);
+      return;
+    }
     if (item.type === 'attribute' && allowedAttributes.has(item.attribute)) {
       if ((item.attribute === 'href' || item.attribute === 'src') && !isSafePublicUrl(item.value)) return;
       target.setAttribute(item.attribute, item.value);

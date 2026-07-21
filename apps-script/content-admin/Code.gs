@@ -8,7 +8,7 @@ const CONTENT_SCHEMA = Object.freeze({
   'Audit Log': ['Timestamp','Action','Status','Username','Role','Target Type','Target ID','Details','Message'],
   'Backup Log': ['Timestamp','Type','Status','Username','File ID','File Name','File URL','Details','Message']
 });
-const PUBLIC_CACHE_KEY = 'public-init-v5';
+const PUBLIC_CACHE_KEY = 'public-init-v6';
 
 function doGet(e) {
   const action = String((e && e.parameter && e.parameter.action) || 'health');
@@ -347,6 +347,7 @@ function seedContent_(spreadsheet) {
       ['instructor.tag','instructor','Nhãn người hướng dẫn','[data-content-key="instructor.tag"]','text','','✦ NGƯỜI HƯỚNG DẪN'],
       ['instructor.title','instructor','Tiêu đề người hướng dẫn','[data-content-key="instructor.title"]','text','','Clow Cat Patronus'],
       ['instructor.quote','instructor','Giới thiệu người hướng dẫn','[data-content-key="instructor.quote"]','text','','Người đồng hành cùng hàng ngàn tâm hồn trên hành trình khám phá bản thân qua ngôn ngữ của những lá bài Clow huyền bí.'],
+      ['instructor.youtubeUrl','instructor','Link video YouTube (watch, youtu.be, shorts, live, embed hoặc playlist)','#instructor-youtube','text','','https://www.youtube.com/watch?v=DXt1TtbYCYc'],
       ['instructor.stat1','instructor','Thành tích 1','[data-content-key="instructor.stat1"]','text','','Hơn 10 năm nghiên cứu Huyền Học, đặc biệt bộ bài Clow'],
       ['instructor.stat2','instructor','Thành tích 2','[data-content-key="instructor.stat2"]','text','','Đã tư vấn cho hơn 1.000 khách hàng'],
       ['instructor.stat3','instructor','Thành tích 3','[data-content-key="instructor.stat3"]','text','','Khai giảng từ 2019, hơn 20 khoá học với 120+ học viên'],
@@ -418,19 +419,21 @@ function seedContent_(spreadsheet) {
   }
   const navigation = spreadsheet.getSheetByName('Navigation');
   if (navigation.getLastRow() === 1) {
-    navigation.getRange(2,1,5,8).setValues([
+    navigation.getRange(2,1,6,8).setValues([
       ['about','Về dịch vụ','#about',true,1,'link',new Date(),'setup'],
-      ['packages','Gói dịch vụ','#packages',true,2,'link',new Date(),'setup'],
-      ['process','Quy trình','#process',true,3,'link',new Date(),'setup'],
-      ['feedback','Cảm nhận','#feedback',true,4,'link',new Date(),'setup'],
-      ['book','Đặt lịch ngay ✨','#book',true,5,'cta',new Date(),'setup']
+      ['instructor','Về chúng tôi','#instructor',true,2,'link',new Date(),'setup'],
+      ['packages','Gói dịch vụ','#packages',true,3,'link',new Date(),'setup'],
+      ['process','Quy trình','#process',true,4,'link',new Date(),'setup'],
+      ['feedback','Cảm nhận','#feedback',true,5,'link',new Date(),'setup'],
+      ['book','Đặt lịch ngay ✨','#book',true,6,'cta',new Date(),'setup']
     ]);
   } else {
     const navigationRows = rowsAsObjects_(navigation);
-    const labelColumn = CONTENT_SCHEMA.Navigation.indexOf('Label') + 1;
-    navigationRows.forEach((row,index) => {
-      if (String(row.Key) === 'about' && String(row.Label).trim() === 'Về chúng tôi') navigation.getRange(index + 2,labelColumn).setValue('Về dịch vụ');
-    });
+    if(!navigationRows.some(row=>String(row.Key)==='instructor')){
+      const orderIndex=CONTENT_SCHEMA.Navigation.indexOf('Order');
+      navigationRows.forEach((row,index)=>{const order=Number(row.Order);if(Number.isFinite(order)&&order>=2)navigation.getRange(index+2,orderIndex+1).setValue(order+1);});
+      navigation.appendRow(['instructor','Về chúng tôi','#instructor',true,2,'link',new Date(),'setup']);
+    }
   }
 }
 

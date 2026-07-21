@@ -1,0 +1,15 @@
+const assert=require('assert');
+const fs=require('fs');
+const vm=require('vm');
+const source=fs.readFileSync(require('path').resolve(__dirname,'../script.js'),'utf8');
+const start=source.indexOf('function normalizeYouTubeEmbedUrl');
+const end=source.indexOf('\nfunction renderContent',start);
+assert(start>=0&&end>start,'Không tìm thấy hàm chuẩn hóa YouTube');
+const context={URL};vm.createContext(context);vm.runInContext(source.slice(start,end),context);
+const normalize=context.normalizeYouTubeEmbedUrl;
+assert.equal(normalize('https://www.youtube.com/watch?v=DXt1TtbYCYc'),'https://www.youtube.com/embed/DXt1TtbYCYc');
+assert.equal(normalize('https://youtu.be/DXt1TtbYCYc?t=30'),'https://www.youtube.com/embed/DXt1TtbYCYc');
+assert.equal(normalize('https://youtube.com/shorts/DXt1TtbYCYc'),'https://www.youtube.com/embed/DXt1TtbYCYc');
+assert.equal(normalize('https://www.youtube.com/embed/DXt1TtbYCYc'),'https://www.youtube.com/embed/DXt1TtbYCYc');
+assert.equal(normalize('https://example.com/watch?v=DXt1TtbYCYc'),'');
+console.log('YouTube URL normalization checks passed.');

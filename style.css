@@ -929,6 +929,13 @@ body:hover #custom-cursor { opacity: 1; }
   border: 1px solid rgba(201, 168, 76, 0.3);
   background: #000;
 }
+.instructor-video iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
 
 .instructor-quote {
   font-family: var(--font-body);

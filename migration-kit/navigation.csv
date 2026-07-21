@@ -1,6 +1,7 @@
 Key,Label,Href,Enabled,Order,Type
 about,Về dịch vụ,#about,TRUE,1,link
-packages,Gói dịch vụ,#packages,TRUE,2,link
-process,Quy trình,#process,TRUE,3,link
-feedback,Cảm nhận,#feedback,TRUE,4,link
-book,Đặt lịch ngay ✨,#book,TRUE,5,cta
+instructor,Về chúng tôi,#instructor,TRUE,2,link
+packages,Gói dịch vụ,#packages,TRUE,3,link
+process,Quy trình,#process,TRUE,4,link
+feedback,Cảm nhận,#feedback,TRUE,5,link
+book,Đặt lịch ngay ✨,#book,TRUE,6,cta

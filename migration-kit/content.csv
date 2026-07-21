@@ -44,6 +44,7 @@ TRUE,instructor.stat1,instructor,Thành tích 1,"[data-content-key=""instructor.
 TRUE,instructor.stat2,instructor,Thành tích 2,"[data-content-key=""instructor.stat2""]",text,,Đã tư vấn cho hơn 1.000 khách hàng
 TRUE,instructor.stat3,instructor,Thành tích 3,"[data-content-key=""instructor.stat3""]",text,,"Khai giảng từ 2019, hơn 20 khoá học với 120+ học viên"
 TRUE,instructor.stat4,instructor,Thành tích 4,"[data-content-key=""instructor.stat4""]",text,,Tổ chức hơn 10 buổi workshop từ 2024 với chủ đề Ứng dụng Huyền Học và Bài Clow để HIỂU & THƯƠNG
+TRUE,instructor.youtubeUrl,instructor,"Link video YouTube (watch, youtu.be, shorts, live, embed hoặc playlist)",#instructor-youtube,text,,https://www.youtube.com/watch?v=DXt1TtbYCYc
 TRUE,packages.descriptionPrefix,packages,Mở đầu mô tả,"[data-content-key=""packages.descriptionPrefix""]",text,,Mỗi buổi trải bài đều kèm theo
 TRUE,packages.descriptionHighlight,packages,Mô tả nổi bật,"[data-content-key=""packages.descriptionHighlight""]",text,,1 ly nước bất kì miễn phí
 TRUE,packages.descriptionSuffix,packages,Kết thúc mô tả,"[data-content-key=""packages.descriptionSuffix""]",text,,từ The Comma ☕

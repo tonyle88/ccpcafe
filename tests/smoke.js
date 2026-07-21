@@ -19,7 +19,7 @@ assert(contentBackend.includes("!/^https:\\/\\//i.test(href)"),'Navigation phả
 assert(contentBackend.includes("requireSession_(body.token, ['admin'])"),'API user phải chỉ cho admin');
 ['Bạn không thể tự hạ quyền','Phải giữ ít nhất một admin'].forEach(message=>assert(contentBackend.includes(message),`User guard thiếu: ${message}`));
 ['contentPublic_','navigationPublic_','sectionPublic_'].forEach(mapper=>assert(contentBackend.includes(`.map(${mapper})`),`Public API thiếu allowlist mapper ${mapper}`));
-assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v5'"),'Public cache key phải tăng khi contract đổi');
+assert(contentBackend.includes("const PUBLIC_CACHE_KEY = 'public-init-v6'"),'Public cache key phải tăng khi contract đổi');
 assert(contentBackend.includes('missingContent')&&contentBackend.includes('existingContentKeys'),'Content seed phải migration idempotent cho Sheet hiện có');
 ['bookingRemoteHealth_','operationsSummary_','UrlFetchApp.fetch'].forEach(term=>assert(contentBackend.includes(term),`Admin dashboard backend thiếu ${term}`));
 assert(contentBackend.includes('script\\.google\\.com|script\\.googleusercontent\\.com'),'Booking health endpoint phải giới hạn Google Apps Script');
@@ -50,9 +50,11 @@ assert(!landingScript.includes('preferredDateInput.value = today'),'Form ngày k
 ['showPicker','syncDatePlaceholder'].forEach(term=>assert(landingScript.includes(term),`Date picker thiếu ${term}`));
 ['bookingDateVi_','dd/MM/yyyy','setSpreadsheetTimeZone'].forEach(term=>assert(bookingBackend.includes(term),`Định dạng ngày Việt Nam thiếu ${term}`));
 const landingContentKeys=[...html.matchAll(/data-content-key="([^"]+)"/g)].map(match=>match[1]);
-assert(new Set(landingContentKeys).size>=67,'Landing phải ánh xạ đầy đủ nội dung các section chính');
+assert(new Set(landingContentKeys).size>=68,'Landing phải ánh xạ đầy đủ nội dung các section chính');
 [...new Set(landingContentKeys)].forEach(key=>assert(contentBackend.includes(`['${key}',`),`Content seed thiếu key ${key}`));
-assert(read('migration-kit/content.csv').split('\n').length>=68,'Migration content phải chứa đầy đủ key landing chính');
+assert(read('migration-kit/content.csv').split('\n').length>=69,'Migration content phải chứa đầy đủ key landing chính');
+assert(landingScript.includes('normalizeYouTubeEmbedUrl')&&html.includes('id="instructor-youtube"'),'Video người hướng dẫn phải nhận mọi định dạng link YouTube an toàn');
+assert(read('migration-kit/navigation.csv').includes('instructor,Về chúng tôi,#instructor'),'Menu và Admin phải có mục Về chúng tôi');
 assert(html.includes('book-discount-extra')&&html.includes('icons/icon-calendar.svg'),'Phụ phí 15 phút phải có icon đồng bộ với page');
 assert(read('migration-kit/section-order.csv').includes('Section Key,Order,Visible,Label'),'Migration section phải có tên tiếng Việt');
 const paymentScript=read('payment.js');['POLL_DELAYS','POLL_MAX_MS','visibilitychange','STOP_STATUSES'].forEach(term=>assert(paymentScript.includes(term),`Payment polling thiếu ${term}`));

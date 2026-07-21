@@ -1259,8 +1259,9 @@ body:hover #custom-cursor { opacity: 1; }
 }
 .discount-icon { font-size: 1.8rem; margin-bottom: 8px; }
 .discount-pct {
-  font-family: var(--font-title);
+  font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
   font-size: 2.4rem;
+  text-transform: uppercase;
   color: var(--gold-light);
   line-height: 1;
   margin-bottom: 6px;

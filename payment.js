@@ -50,7 +50,7 @@ function createQrUrl(payment,order) {
 function createDirectQrUrl(payment,order) {
   const bankCode=resolveBankCode(payment,order),accountNo=String(payment.accountNo||'').replace(/\s/g,'');
   if(!bankCode||!accountNo)return '';
-  return `https://img.vietqr.io/image/${encodeURIComponent(bankCode)}-${encodeURIComponent(accountNo)}-compact2.png?amount=${encodeURIComponent(order.amount)}&addInfo=${encodeURIComponent(order.transferContent)}&accountName=${encodeURIComponent(payment.accountName||'')}`;
+  return `https://img.vietqr.io/image/${encodeURIComponent(bankCode)}-${encodeURIComponent(accountNo)}-qr_only.png?amount=${encodeURIComponent(order.amount)}&addInfo=${encodeURIComponent(order.transferContent)}&accountName=${encodeURIComponent(payment.accountName||'')}`;
 }
 
 function formatVnd(value) { return new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND' }).format(value); }

@@ -3,7 +3,7 @@ module.exports = async function handler(request, response) {
   const parsed=new URL(request.url||'/api/vietqr','https://local.invalid'),query=request.query||Object.fromEntries(parsed.searchParams.entries());
   const bank=String(query.bank||parsed.searchParams.get('bank')||'').trim(),account=String(query.account||parsed.searchParams.get('account')||'').replace(/\s/g,''),amount=Number(query.amount||parsed.searchParams.get('amount')),info=String(query.info||parsed.searchParams.get('info')||'').trim(),name=String(query.name||parsed.searchParams.get('name')||'').trim();
   if(!/^[A-Za-z0-9]{2,20}$/.test(bank)||!/^[0-9]{5,30}$/.test(account)||!Number.isSafeInteger(amount)||amount<1000||amount>1000000000||!/^[A-Za-z0-9 ._-]{3,50}$/.test(info)||name.length>150) return response.status(400).json({error:'Invalid QR parameters'});
-  const upstreamUrl=`https://img.vietqr.io/image/${encodeURIComponent(bank)}-${encodeURIComponent(account)}-compact2.png?amount=${encodeURIComponent(amount)}&addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent(name)}`;
+  const upstreamUrl=`https://img.vietqr.io/image/${encodeURIComponent(bank)}-${encodeURIComponent(account)}-qr_only.png?amount=${encodeURIComponent(amount)}&addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent(name)}`;
   let timeout;
   try {
     const controller=new AbortController();timeout=setTimeout(()=>controller.abort(),12000);

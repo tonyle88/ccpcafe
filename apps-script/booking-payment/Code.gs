@@ -140,7 +140,7 @@ function getPaymentConfig_() { const properties=PropertiesService.getScriptPrope
 function paymentQrUrl_(row,properties) {
   const bankCode=paymentBankCode_(properties), accountNo=String(properties.getProperty('PAYMENT_ACCOUNT_NO')||'').replace(/\s/g,'');
   if(!bankCode||!accountNo) return '';
-  const base='https://img.vietqr.io/image/'+encodeURIComponent(bankCode)+'-'+encodeURIComponent(accountNo)+'-compact2.png';
+  const base='https://img.vietqr.io/image/'+encodeURIComponent(bankCode)+'-'+encodeURIComponent(accountNo)+'-qr_only.png';
   return base+'?amount='+encodeURIComponent(Number(row['Final Amount']))+'&addInfo='+encodeURIComponent(row['Transfer Content'])+'&accountName='+encodeURIComponent(properties.getProperty('PAYMENT_ACCOUNT_NAME')||'');
 }
 function publicOrder_(record) { const row=record.object||record, properties=PropertiesService.getScriptProperties(), mode=String(row['Payment Mode']||paymentMode_(properties)),base=Number(row['Base Amount']),discount=Number(row['Discount Amount']); return { orderId:row['Order ID'], packageName:row['Package Name'], baseAmount:base, discountAmount:discount, discountPercent:base>0?Math.round(discount/base*10000)/100:0, amount:Number(row['Final Amount']), currency:row.Currency, status:row.Status, transferContent:row['Transfer Content'], payment:{ mode:mode, qrUrl:paymentQrUrl_(row,properties), bankCode:paymentBankCode_(properties), bankName:properties.getProperty('PAYMENT_BANK_NAME')||'', accountName:properties.getProperty('PAYMENT_ACCOUNT_NAME')||'', accountNo:properties.getProperty('PAYMENT_ACCOUNT_NO')||'' } }; }
